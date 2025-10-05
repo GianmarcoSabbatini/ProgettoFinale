@@ -103,9 +103,8 @@ const showSnackbar = (message, type = 'success') => {
 
 // Colori disponibili per gli avatar
 const avatarColors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8', '#FDCB6E',
-    '#6C5CE7', '#00B894', '#E17055', '#0984E3', '#D63031'
+    '#c1121f', '#fb8500', '#2a9d8f', '#023e8a', '#7b2cbf',
+    '#ff006e', '#6a994e', '#f08080', '#8f2d56', '#0d00a4'
 ];
 
 // Funzione per generare un colore casuale dall'array
