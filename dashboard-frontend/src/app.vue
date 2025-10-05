@@ -8,7 +8,7 @@
 
 body {
     margin: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     background-color: #f4f5f7; /* Colore di sfondo generale */
 }
 </style>

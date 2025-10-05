@@ -70,11 +70,10 @@ async function resetDatabase() {
         // Inserisci messaggi di esempio
         await dbConnection.execute(`
             INSERT INTO messages (title, content, author) VALUES 
-            ('Benvenuto nella Dashboard', 'Questa è la tua dashboard personale. Qui puoi visualizzare messaggi e gestire il tuo profilo.', 'Sistema'),
-            ('Aggiornamento Sistema', 'Il sistema è stato aggiornato con nuove funzionalità per migliorare la tua esperienza.', 'Admin'),
+            ('Compleanno di Pietro', 'Ragazzi, venerdì è il mio compleanno, quindi non fate colazione che porto io delle cose dolci da mangiare in sala comune! :)', 'Pietro Rossi'),
+            ('Corso di formazione', 'Ricordo a tutto il team DESIGN che lunedì c\\'è il corso in presenza di Figma.', 'Flora Morelli'),
             ('Promemoria', 'Ricordati di aggiornare le tue informazioni di profilo se necessario.', 'HR')
         `);
-        console.log('✓ Messaggi inseriti');
         
         await dbConnection.end();
         console.log('\n✅ Database resettato con successo!');

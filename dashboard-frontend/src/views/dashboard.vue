@@ -9,7 +9,44 @@
         <a href="#" class="nav-link">Impostazioni</a>
       </nav>
       <div class="header-actions">
-        <i class="fas fa-search action-icon"></i>
+        <div class="notification-container">
+          <i @click="toggleNotifications" class="fas fa-bell action-icon" :class="{ 'has-notifications': notifications.length > 0 }"></i>
+          <span v-if="notifications.length > 0" class="notification-badge">{{ notifications.length }}</span>
+          
+          <!-- Dropdown Notifiche -->
+          <transition name="dropdown">
+            <div v-if="showNotifications" class="notifications-dropdown">
+              <div class="notifications-header">
+                <h3>Notifiche</h3>
+                <button @click="clearAllNotifications" class="clear-all-btn">Cancella tutto</button>
+              </div>
+              <div class="notifications-list">
+                <div v-if="notifications.length === 0" class="no-notifications">
+                  <i class="fas fa-inbox"></i>
+                  <p>Nessuna notifica</p>
+                </div>
+                <div 
+                  v-for="notification in notifications" 
+                  :key="notification.id" 
+                  class="notification-item"
+                  :class="'notification-' + notification.type"
+                >
+                  <div class="notification-icon">
+                    <i :class="getNotificationIcon(notification.type)"></i>
+                  </div>
+                  <div class="notification-content">
+                    <div class="notification-sender">{{ notification.sender }}</div>
+                    <div class="notification-message">{{ notification.message }}</div>
+                    <div class="notification-time">{{ notification.time }}</div>
+                  </div>
+                  <button @click="removeNotification(notification.id)" class="remove-notification">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
         <button @click="handleLogout" class="logout-button" title="Logout">
             <i class="fas fa-sign-out-alt action-icon"></i>
         </button>
@@ -45,10 +82,12 @@
           <h2>Ultimi messaggi dalla Bacheca</h2>
           <div v-for="message in messages" :key="message.id" class="message-item">
             <div class="message-author">
-                <div class="avatar"></div>
+                <div class="avatar" :style="{ backgroundColor: getAvatarColor(message.author) }">
+                  {{ getAuthorInitials(message.author) }}
+                </div>
                 <div>
                     <strong>{{ message.author }}</strong>
-                    <small>{{ message.timestamp }}</small>
+                    <small>{{ formatDate(message.created_at) }}</small>
                 </div>
             </div>
             <p class="message-content">{{ message.content }}</p>
@@ -125,10 +164,110 @@ const editForm = ref({
   team: ''
 });
 
+// Sistema Notifiche
+const showNotifications = ref(false);
+const notifications = ref([]);
+let notificationIdCounter = 1;
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value;
+};
+
+const addNotification = (sender, message, type = 'info') => {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  
+  notifications.value.unshift({
+    id: notificationIdCounter++,
+    sender: sender,
+    message: message,
+    time: timeString,
+    type: type // 'info', 'success', 'warning', 'message'
+  });
+};
+
+const removeNotification = (id) => {
+  notifications.value = notifications.value.filter(n => n.id !== id);
+};
+
+const clearAllNotifications = () => {
+  notifications.value = [];
+};
+
+const getNotificationIcon = (type) => {
+  switch(type) {
+    case 'success': return 'fas fa-check-circle';
+    case 'warning': return 'fas fa-exclamation-triangle';
+    case 'message': return 'fas fa-envelope';
+    default: return 'fas fa-info-circle';
+  }
+};
+
+// Funzione per formattare la data
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return 'Oggi';
+  } else if (diffDays === 1) {
+    return 'Ieri';
+  } else if (diffDays < 7) {
+    return `${diffDays} giorni fa`;
+  } else {
+    return date.toLocaleDateString('it-IT');
+  }
+};
+
 // Funzione per ottenere le iniziali
 const getInitials = (nome, cognome) => {
     if (!nome || !cognome) return '';
     return (nome.charAt(0) + cognome.charAt(0)).toUpperCase();
+};
+
+// Funzione per ottenere le iniziali dall'autore del messaggio
+const getAuthorInitials = (author) => {
+  const authorMap = {
+    'SISTEMA': 'SY',
+    'ADMIN': 'AD',
+    'HR': 'HR',
+    'Sistema': 'SY',
+    'Admin': 'AD'
+  };
+  
+  // Se è un autore speciale, usa la mappa
+  if (authorMap[author]) {
+    return authorMap[author];
+  }
+  
+  // Altrimenti, estrai iniziali da nome e cognome
+  const parts = author.split(' ');
+  if (parts.length >= 2) {
+    // Prendi prima lettera del nome e prima lettera del cognome
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+  
+  // Se è una singola parola, prendi le prime 2 lettere
+  return author.substring(0, 2).toUpperCase();
+};
+
+// Funzione per ottenere il colore avatar basato sull'autore
+const getAvatarColor = (author) => {
+  const colorMap = {
+    'SISTEMA': '#6366f1',    // Indaco (sistema tecnico)
+    'Sistema': '#6366f1',
+    'ADMIN': '#ef4444',      // Rosso (amministrativo)
+    'Admin': '#ef4444',
+    'HR': '#10b981',         // Verde (risorse umane)
+    'Hr': '#10b981',
+    'Pietro Rossi': '#f59e0b',  // Arancione
+    'Flora Morelli': '#ec4899'  // Rosa
+  };
+  
+  return colorMap[author] || '#8b5cf6'; // Viola di default
 };
 
 const toggleEditMode = async () => {
@@ -162,6 +301,9 @@ const saveProfile = async () => {
       
       // Mostra notifica di successo
       notificationStore.showNotification('Profilo aggiornato con successo!', 'success');
+      
+      // Aggiungi notifica nel sistema
+      addNotification('SISTEMA', 'Il tuo profilo è stato aggiornato con successo', 'success');
     }
   } catch (error) {
     console.error('Errore nel salvataggio del profilo:', error);
@@ -177,6 +319,7 @@ onMounted(async () => {
   try {
     const messagesResponse = await axios.get('http://localhost:3001/api/messages');
     messages.value = messagesResponse.data.messages || [];
+    console.log('Messaggi ricevuti:', messages.value);
 
     const profileResponse = await axios.get('http://localhost:3001/api/profile', {
         headers: {
@@ -184,6 +327,11 @@ onMounted(async () => {
         }
     });
     user.value = profileResponse.data.profile;
+    
+    // Aggiungi notifiche di esempio
+    addNotification('SISTEMA', 'Benvenuto nella dashboard aziendale!', 'info');
+    addNotification('HR', 'Ricordati di completare il tuo profilo con Job Title e Team', 'warning');
+    addNotification('ADMIN', 'Nuove policy aziendali disponibili nella sezione Documenti', 'message');
   } catch (error) {
     console.error("Errore nel caricamento dei dati:", error);
   }
@@ -210,6 +358,12 @@ onMounted(async () => {
 .nav-link { text-decoration: none; color: #777; font-weight: 500; }
 .nav-link.active { color: #333; }
 .header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: #777; }
+
+/* Sistema Notifiche */
+.notification-container {
+  position: relative;
+}
+
 .action-icon {
   background-color: #fafafb;
   padding: 0.6rem;
@@ -218,6 +372,201 @@ onMounted(async () => {
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
+
+.action-icon.has-notifications {
+  animation: bellRing 2s ease-in-out infinite;
+}
+
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(-10deg); }
+  20%, 40% { transform: rotate(10deg); }
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 380px;
+  max-height: 500px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fafafb;
+}
+
+.notifications-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.clear-all-btn {
+  background: none;
+  border: none;
+  color: #4b00e9;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #999;
+}
+
+.no-notifications i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #ddd;
+}
+
+.no-notifications p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.notification-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background-color: #fafafb;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.notification-success .notification-icon {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.notification-warning .notification-icon {
+  background-color: #fef3c7;
+  color: #f59e0b;
+}
+
+.notification-message .notification-icon {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.notification-info .notification-icon {
+  background-color: #e0e7ff;
+  color: #6366f1;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-sender {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.notification-message {
+  font-size: 0.85rem;
+  color: #44444f;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.remove-notification {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.remove-notification:hover {
+  background-color: #fee;
+  color: #ef4444;
+}
+
+/* Animazione Dropdown */
+.dropdown-enter-active, .dropdown-leave-active {
+  transition: all 0.3s ease;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
 .action-icon:hover {
   background-color: #e8e6ff;
 }
@@ -245,7 +594,13 @@ onMounted(async () => {
 }
 .action-card:hover { border: 2px solid #4b00e9; transition: ease-in 0.2s; }
 .action-card .icon { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; color: #4b00e9; }
-.main-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+.action-card span { font-family: 'DM Sans', sans-serif; color: #4b00e9; }
+.main-panel { 
+  display: grid; 
+  grid-template-columns: 2fr 1fr; 
+  gap: 2rem; 
+  align-items: start;
+}
 h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 .message-board, .user-profile {
   background-color: #ffffff;
@@ -254,14 +609,89 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
-.action-card span {font-family: 'DM Sans', sans-serif; color: #4b00e9;}
-.message-item { border-bottom: 1px solid #e0e0e0; padding: 1rem 0; }
-.message-item:last-child { border-bottom: none; }
-.message-author { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
-.avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #ccc; }
-.message-author div { display: flex; flex-direction: column; }
-.message-author small { color: #777; font-size: 0.8rem; }
-.message-content { color: #777; line-height: 1.5; margin: 0; }
+
+.message-board h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.message-item { 
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  background-color: #fafafb;
+  border-radius: 10px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.message-item:hover {
+  background-color: #f5f5ff;
+  border-color: #e8e6ff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+}
+
+.message-item:last-child { 
+  margin-bottom: 0;
+}
+
+.message-author { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  margin-bottom: 0.75rem; 
+}
+
+.avatar { 
+  width: 48px; 
+  height: 48px; 
+  border-radius: 50%; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.5px;
+}
+
+.message-author > div { 
+  display: flex; 
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.message-author strong {
+  color: #333;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.message-author small { 
+  color: #999; 
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.message-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0.5rem 0 0.4rem 0;
+}
+
+.message-content { 
+  color: #44444f; 
+  line-height: 1.6; 
+  margin: 0;
+  font-size: 0.9rem;
+  padding-left: 0;
+}
 
 .avatar-circle {
   width: 120px;
