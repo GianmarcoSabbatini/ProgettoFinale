@@ -32,7 +32,8 @@ export const useAuthStore = defineStore('auth', () => {
             }
         } catch (error) {
             console.error('Errore di login:', error.response?.data?.message || error.message);
-            alert('Credenziali non valide!');
+            // Rilancia l'errore per permettere al componente di gestirlo con la snackbar
+            throw error;
         }
     }
 

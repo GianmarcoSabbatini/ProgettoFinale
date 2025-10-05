@@ -253,6 +253,129 @@ app.get('/api/messages', async (req, res) => {
     }
 });
 
+// POST nuovo messaggio
+app.post('/api/messages', async (req, res) => {
+    try {
+        const { title, content, author } = req.body;
+        
+        if (!title || !content || !author) {
+            return res.status(400).json({
+                success: false,
+                message: 'Tutti i campi sono obbligatori'
+            });
+        }
+        
+        await db.execute(
+            'INSERT INTO messages (title, content, author) VALUES (?, ?, ?)',
+            [title, content, author]
+        );
+        
+        res.json({
+            success: true,
+            message: 'Messaggio pubblicato con successo'
+        });
+    } catch (error) {
+        console.error('Errore creazione messaggio:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante la pubblicazione del messaggio'
+        });
+    }
+});
+
+// PUT modifica messaggio
+app.put('/api/messages/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { content, author } = req.body;
+        
+        if (!content || !author) {
+            return res.status(400).json({
+                success: false,
+                message: 'Contenuto e autore sono obbligatori'
+            });
+        }
+        
+        // Verifica che il messaggio appartenga all'autore
+        const [messages] = await db.execute('SELECT author FROM messages WHERE id = ?', [id]);
+        
+        if (messages.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Messaggio non trovato'
+            });
+        }
+        
+        if (messages[0].author !== author) {
+            return res.status(403).json({
+                success: false,
+                message: 'Non sei autorizzato a modificare questo messaggio'
+            });
+        }
+        
+        await db.execute(
+            'UPDATE messages SET content = ? WHERE id = ?',
+            [content, id]
+        );
+        
+        res.json({
+            success: true,
+            message: 'Messaggio modificato con successo'
+        });
+    } catch (error) {
+        console.error('Errore modifica messaggio:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante la modifica del messaggio'
+        });
+    }
+});
+
+// DELETE elimina messaggio
+app.delete('/api/messages/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { author } = req.body;
+        
+        if (!author) {
+            return res.status(400).json({
+                success: false,
+                message: 'Autore è obbligatorio'
+            });
+        }
+        
+        // Verifica che il messaggio appartenga all'autore
+        const [messages] = await db.execute('SELECT author FROM messages WHERE id = ?', [id]);
+        
+        if (messages.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Messaggio non trovato'
+            });
+        }
+        
+        if (messages[0].author !== author) {
+            return res.status(403).json({
+                success: false,
+                message: 'Non sei autorizzato a eliminare questo messaggio'
+            });
+        }
+        
+        await db.execute('DELETE FROM messages WHERE id = ?', [id]);
+        
+        res.json({
+            success: true,
+            message: 'Messaggio eliminato con successo'
+        });
+    } catch (error) {
+        console.error('Errore eliminazione messaggio:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante l\'eliminazione del messaggio'
+        });
+    }
+});
+
 // Start server
 async function startServer() {
     await initDB();

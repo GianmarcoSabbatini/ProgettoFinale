@@ -47,7 +47,7 @@
             </div>
           </transition>
         </div>
-        <button @click="handleLogout" class="logout-button" title="Logout">
+        <button @click="openLogoutModal" class="logout-button" title="Logout">
             <i class="fas fa-sign-out-alt action-icon"></i>
         </button>
       </div>
@@ -80,17 +80,71 @@
       <div class="main-panel">
         <section class="message-board">
           <h2>Ultimi messaggi dalla Bacheca</h2>
+          
+          <!-- Inline Message Composer -->
+          <div class="message-composer">
+            <textarea 
+              v-model="newMessageContent" 
+              placeholder="Scrivi un nuovo messaggio per la bacheca..."
+              rows="3"
+              @keydown.enter.ctrl="publishQuickMessage"
+            ></textarea>
+            <button @click="publishQuickMessage" class="send-message-btn">
+              <i class="fas fa-paper-plane"></i> Invia
+            </button>
+          </div>
+
           <div v-for="message in messages" :key="message.id" class="message-item">
-            <div class="message-author">
-                <div class="avatar" :style="{ backgroundColor: getAvatarColor(message.author) }">
-                  {{ getAuthorInitials(message.author) }}
-                </div>
-                <div>
-                    <strong>{{ message.author }}</strong>
-                    <small>{{ formatDate(message.created_at) }}</small>
-                </div>
+            <div class="message-header-row">
+              <div class="message-author">
+                  <div class="avatar" :style="{ backgroundColor: getAvatarColor(message.author) }">
+                    {{ getAuthorInitials(message.author) }}
+                  </div>
+                  <div>
+                      <strong>{{ message.author }}</strong>
+                      <small>{{ formatDate(message.created_at) }}</small>
+                  </div>
+              </div>
+              
+              <!-- Pulsanti modifica/elimina solo per messaggi dell'utente -->
+              <div v-if="isUserMessage(message)" class="message-actions">
+                <button 
+                  v-if="editingMessageId !== message.id"
+                  @click="startEditMessage(message)" 
+                  class="action-btn edit-btn-small"
+                  title="Modifica messaggio"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                  @click="deleteMessage(message.id)" 
+                  class="action-btn delete-btn"
+                  title="Elimina messaggio"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
             </div>
-            <p class="message-content">{{ message.content }}</p>
+            
+            <!-- Modalità visualizzazione -->
+            <p v-if="editingMessageId !== message.id" class="message-content">{{ message.content }}</p>
+            
+            <!-- Modalità editing -->
+            <div v-else class="edit-message-form">
+              <textarea 
+                v-model="editingMessageContent" 
+                class="edit-textarea"
+                rows="3"
+              ></textarea>
+              <div class="edit-actions">
+                <button @click="cancelEdit" class="cancel-edit-btn">
+                  <i class="fas fa-times"></i> Annulla
+                </button>
+                <button @click="saveEditMessage(message.id)" class="save-edit-btn">
+                  <i class="fas fa-check"></i> Salva
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -145,6 +199,48 @@
         <span>{{ notificationStore.notification.message }}</span>
       </div>
     </transition>
+
+    <!-- Modale Conferma Eliminazione -->
+    <transition name="modal">
+      <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
+        <div class="delete-modal-content" @click.stop>
+          <div class="delete-modal-icon">
+            <i class="fas fa-trash-alt"></i>
+          </div>
+          <h3 class="delete-modal-title">Elimina messaggio</h3>
+          <p class="delete-modal-text">Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata.</p>
+          <div class="delete-modal-actions">
+            <button @click="cancelDelete" class="cancel-delete-modal-btn">
+              <i class="fas fa-times"></i> Annulla
+            </button>
+            <button @click="confirmDelete" class="confirm-delete-btn">
+              <i class="fas fa-trash"></i> Elimina
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modale Conferma Logout -->
+    <transition name="modal">
+      <div v-if="showLogoutModal" class="modal-overlay" @click="cancelLogout">
+        <div class="logout-modal-content" @click.stop>
+          <div class="logout-modal-icon">
+            <i class="fas fa-sign-out-alt"></i>
+          </div>
+          <h3 class="logout-modal-title">Conferma Logout</h3>
+          <p class="logout-modal-text">Sei sicuro di voler uscire dal tuo account?</p>
+          <div class="logout-modal-actions">
+            <button @click="cancelLogout" class="cancel-logout-modal-btn">
+              <i class="fas fa-times"></i> Annulla
+            </button>
+            <button @click="confirmLogout" class="confirm-logout-btn">
+              <i class="fas fa-sign-out-alt"></i> Esci
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -163,6 +259,153 @@ const editForm = ref({
   job_title: '',
   team: ''
 });
+
+// Nuovo messaggio inline
+const newMessageContent = ref('');
+
+const publishQuickMessage = async () => {
+  if (!newMessageContent.value.trim()) {
+    notificationStore.showNotification('Scrivi un messaggio prima di inviare!', 'error');
+    return;
+  }
+
+  // Verifica che i dati utente siano caricati
+  if (!user.value || !user.value.nome || !user.value.cognome) {
+    notificationStore.showNotification('Errore: dati utente non disponibili. Riprova tra poco.', 'error');
+    return;
+  }
+
+  try {
+    const author = `${user.value.nome} ${user.value.cognome}`;
+    
+    console.log('Invio messaggio con dati:', {
+      title: 'Messaggio Bacheca',
+      content: newMessageContent.value.trim(),
+      author: author
+    });
+    
+    const response = await axios.post('http://localhost:3001/api/messages', {
+      title: 'Messaggio Bacheca',
+      content: newMessageContent.value.trim(),
+      author: author
+    });
+
+    console.log('Risposta backend:', response.data);
+
+    if (response.data.success) {
+      // Ricarica i messaggi
+      await loadMessages();
+      
+      // Pulisci la textarea
+      newMessageContent.value = '';
+      
+      // Mostra notifica di successo
+      notificationStore.showNotification('Messaggio pubblicato con successo!', 'success');
+      
+      // Aggiungi notifica nel sistema
+      try {
+        addNotification('SISTEMA', 'Il tuo messaggio è stato pubblicato nella bacheca', 'success');
+      } catch (notifError) {
+        console.error('Errore aggiunta notifica:', notifError);
+      }
+    }
+  } catch (error) {
+    console.error('Errore pubblicazione messaggio:', error);
+    console.error('Dettagli errore:', error.response?.data || error.message);
+    notificationStore.showNotification('Errore nella pubblicazione del messaggio. Riprova.', 'error');
+  }
+};
+
+const loadMessages = async () => {
+  const messagesResponse = await axios.get('http://localhost:3001/api/messages');
+  messages.value = messagesResponse.data.messages || [];
+};
+
+// Modifica ed eliminazione messaggi
+const editingMessageId = ref(null);
+const editingMessageContent = ref('');
+
+const isUserMessage = (message) => {
+  if (!user.value || !user.value.nome || !user.value.cognome) return false;
+  const currentUser = `${user.value.nome} ${user.value.cognome}`;
+  return message.author === currentUser;
+};
+
+const startEditMessage = (message) => {
+  editingMessageId.value = message.id;
+  editingMessageContent.value = message.content;
+};
+
+const cancelEdit = () => {
+  editingMessageId.value = null;
+  editingMessageContent.value = '';
+};
+
+const saveEditMessage = async (messageId) => {
+  if (!editingMessageContent.value.trim()) {
+    notificationStore.showNotification('Il messaggio non può essere vuoto!', 'error');
+    return;
+  }
+
+  try {
+    const author = `${user.value.nome} ${user.value.cognome}`;
+    
+    const response = await axios.put(`http://localhost:3001/api/messages/${messageId}`, {
+      content: editingMessageContent.value.trim(),
+      author: author
+    });
+
+    if (response.data.success) {
+      await loadMessages();
+      editingMessageId.value = null;
+      editingMessageContent.value = '';
+      notificationStore.showNotification('Messaggio modificato con successo!', 'success');
+      addNotification('SISTEMA', 'Hai modificato il tuo messaggio', 'info');
+    }
+  } catch (error) {
+    console.error('Errore modifica messaggio:', error);
+    notificationStore.showNotification('Errore nella modifica del messaggio. Riprova.', 'error');
+  }
+};
+
+// Eliminazione messaggio con modale
+const showDeleteModal = ref(false);
+const messageToDelete = ref(null);
+
+const deleteMessage = (messageId) => {
+  messageToDelete.value = messageId;
+  showDeleteModal.value = true;
+};
+
+const cancelDelete = () => {
+  showDeleteModal.value = false;
+  messageToDelete.value = null;
+};
+
+const confirmDelete = async () => {
+  if (!messageToDelete.value) return;
+
+  try {
+    const author = `${user.value.nome} ${user.value.cognome}`;
+    
+    const response = await axios.delete(`http://localhost:3001/api/messages/${messageToDelete.value}`, {
+      data: { author: author }
+    });
+
+    if (response.data.success) {
+      await loadMessages();
+      showDeleteModal.value = false;
+      messageToDelete.value = null;
+      notificationStore.showNotification('Messaggio eliminato con successo!', 'success');
+      addNotification('SISTEMA', 'Hai eliminato un messaggio dalla bacheca', 'info');
+    }
+  } catch (error) {
+    console.error('Errore eliminazione messaggio:', error);
+    showDeleteModal.value = false;
+    messageToDelete.value = null;
+    notificationStore.showNotification('Errore nell\'eliminazione del messaggio. Riprova.', 'error');
+  }
+};
 
 // Sistema Notifiche
 const showNotifications = ref(false);
@@ -311,14 +554,25 @@ const saveProfile = async () => {
   }
 };
 
-const handleLogout = () => {
-    authStore.logout();
+// Logout con modale di conferma
+const showLogoutModal = ref(false);
+
+const openLogoutModal = () => {
+  showLogoutModal.value = true;
+};
+
+const cancelLogout = () => {
+  showLogoutModal.value = false;
+};
+
+const confirmLogout = () => {
+  showLogoutModal.value = false;
+  authStore.logout();
 };
 
 onMounted(async () => {
   try {
-    const messagesResponse = await axios.get('http://localhost:3001/api/messages');
-    messages.value = messagesResponse.data.messages || [];
+    await loadMessages();
     console.log('Messaggi ricevuti:', messages.value);
 
     const profileResponse = await axios.get('http://localhost:3001/api/profile', {
@@ -638,12 +892,112 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   margin-bottom: 0;
 }
 
+.message-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
 .message-author { 
   display: flex; 
   align-items: center; 
   gap: 1rem; 
-  margin-bottom: 0.75rem; 
 }
+
+.message-actions {
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.message-item:hover .message-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.edit-btn-small:hover {
+  background-color: #e3f2fd;
+  color: #2196f3;
+}
+
+.delete-btn:hover {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+.edit-message-form {
+  margin-top: 0.75rem;
+}
+
+.edit-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #6366f1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  resize: vertical;
+  background-color: #ffffff;
+  margin-bottom: 0.75rem;
+}
+
+.edit-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.cancel-edit-btn,
+.save-edit-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cancel-edit-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.cancel-edit-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.save-edit-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.save-edit-btn:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
 
 .avatar { 
   width: 48px; 
@@ -910,6 +1264,292 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   }
   to {
     transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+/* Message Composer Inline */
+.message-composer {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #fafafb;
+  border-radius: 12px;
+  border: 2px solid #e7e7ee;
+  align-items: flex-start;
+}
+
+.message-composer textarea {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #e7e7ee;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.3s ease;
+  background-color: #ffffff;
+}
+
+.message-composer textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.message-composer textarea::placeholder {
+  color: #999;
+}
+
+.send-message-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  white-space: nowrap;
+  height: fit-content;
+}
+
+.send-message-btn:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.send-message-btn:active {
+  transform: translateY(0);
+}
+
+/* Delete Confirmation Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.delete-modal-content {
+  background-color: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.delete-modal-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem auto;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #f44336;
+}
+
+.delete-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.delete-modal-text {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.cancel-delete-modal-btn,
+.confirm-delete-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancel-delete-modal-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.cancel-delete-modal-btn:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.confirm-delete-btn {
+  background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+.confirm-delete-btn:hover {
+  background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.confirm-delete-btn:active {
+  transform: translateY(0);
+}
+
+/* Logout Confirmation Modal */
+.logout-modal-content {
+  background-color: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.logout-modal-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem auto;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #ff9800;
+}
+
+.logout-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.logout-modal-text {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.logout-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.cancel-logout-modal-btn,
+.confirm-logout-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancel-logout-modal-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.cancel-logout-modal-btn:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.confirm-logout-btn {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.confirm-logout-btn:hover {
+  background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.confirm-logout-btn:active {
+  transform: translateY(0);
+}
+
+/* Modal Transitions */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .delete-modal-content {
+  animation: modalSlideUp 0.3s ease;
+}
+
+.modal-leave-active .delete-modal-content {
+  animation: modalSlideDown 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(50px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideDown {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(50px) scale(0.9);
     opacity: 0;
   }
 }

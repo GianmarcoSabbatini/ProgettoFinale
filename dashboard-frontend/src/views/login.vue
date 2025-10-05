@@ -23,6 +23,14 @@
         <p>Non hai un account? <router-link to="/register">Registrati qui</router-link></p>
       </div>
     </div>
+
+    <!-- Snackbar -->
+    <transition name="snackbar">
+      <div v-if="snackbar.show" :class="['snackbar', snackbar.type]">
+        <i :class="snackbar.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <span>{{ snackbar.message }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -37,12 +45,35 @@ const form = reactive({
   password: 'password123',      // Pre-compilato per comodità
 });
 
-const handleLogin = () => {
+// Snackbar state
+const snackbar = reactive({
+  show: false,
+  message: '',
+  type: 'error' // 'success' o 'error'
+});
+
+const showSnackbar = (message, type = 'error') => {
+  snackbar.message = message;
+  snackbar.type = type;
+  snackbar.show = true;
+  
+  setTimeout(() => {
+    snackbar.show = false;
+  }, 4000); // Nasconde dopo 4 secondi
+};
+
+const handleLogin = async () => {
   if (!form.email || !form.password) {
-      alert('Per favore, inserisci email e password.');
+      showSnackbar('Per favore, inserisci email e password.', 'error');
       return;
   }
-  authStore.login(form.email, form.password);
+  
+  try {
+    await authStore.login(form.email, form.password);
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Credenziali non valide. Riprova.';
+    showSnackbar(errorMessage, 'error');
+  }
 };
 </script>
 
@@ -157,5 +188,75 @@ h1 {
 }
 .register-link a:hover {
     text-decoration: underline;
+}
+
+/* Snackbar Styles */
+.snackbar {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+
+.snackbar.success {
+  background-color: #10b981;
+  color: white;
+}
+
+.snackbar.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.snackbar i {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.snackbar span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Animazioni Snackbar */
+.snackbar-enter-active {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.snackbar-leave-active {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
 }
 </style>
