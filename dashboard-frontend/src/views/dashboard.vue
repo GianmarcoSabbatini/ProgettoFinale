@@ -56,119 +56,131 @@
         </section>
 
         <aside class="user-profile">
-          <h2>Su di te</h2>
-          <img :src="user.profileImageUrl" alt="User profile picture" class="profile-picture">
-          <div v-if="!isEditing" class="profile-details">
-            <div v-for="(value, key) in userDisplayData" :key="key" class="detail-item">
-                <span class="detail-label">{{ key }}</span>
-                <strong class="detail-value">{{ value }}</strong>
-            </div>
-          </div>
-          
-          <!-- Form di modifica -->
-          <div v-if="isEditing" class="profile-edit-form">
-            <div v-for="(value, key) in userLabels" :key="key" class="edit-item">
-              <label :for="key" class="edit-label">{{ value }}</label>
-              <input 
-                :id="key"
-                v-model="editableUser[key]" 
-                type="text" 
-                class="edit-input"
-                :placeholder="value"
-              >
-            </div>
-          </div>
-          
-          <div class="profile-actions">
-            <button v-if="!isEditing" @click="startEditing" class="edit-button">
-              <i class="fas fa-pencil-alt"></i> Modifica
+          <div class="profile-header">
+            <h2>Su di te</h2>
+            <button @click="toggleEditMode" class="edit-btn">
+              <i :class="isEditing ? 'fas fa-save' : 'fas fa-edit'"></i> 
+              {{ isEditing ? 'Salva le modifiche' : 'Modifica' }}
             </button>
-            <div v-if="isEditing" class="edit-actions">
-              <button @click="saveProfile" class="save-button">
-                <i class="fas fa-check"></i> Salva
-              </button>
-              <button @click="cancelEditing" class="cancel-button">
-                <i class="fas fa-times"></i> Annulla
-              </button>
+          </div>
+          <div class="avatar-circle" :style="{ backgroundColor: user.avatar || '#4ECDC4' }">
+            {{ getInitials(user.nome, user.cognome) }}
+          </div>
+          <h3 class="user-name">{{ user.nome }} {{ user.cognome }}</h3>
+          <p class="user-email">{{ user.email }}</p>
+          
+          <!-- Modalità visualizzazione -->
+          <div v-if="!isEditing">
+            <p v-if="user.job_title" class="user-job"><strong>Job Title:</strong> {{ user.job_title }}</p>
+            <p v-if="user.team" class="user-team"><strong>Team:</strong> {{ user.team }}</p>
+          </div>
+          
+          <!-- Modalità modifica -->
+          <div v-else class="edit-form">
+            <div class="form-group">
+              <label>Job Title:</label>
+              <input v-model="editForm.job_title" type="text" class="form-input" placeholder="Inserisci il tuo ruolo" />
+            </div>
+            <div class="form-group">
+              <label>Team:</label>
+              <select v-model="editForm.team" class="form-input">
+                <option value="">Seleziona un team</option>
+                <option value="Design">Design</option>
+                <option value="Development">Development</option>
+                <option value="Marketing">Marketing</option>
+                <option value="HR">HR</option>
+              </select>
             </div>
           </div>
         </aside>
       </div>
     </main>
+
+    <!-- Snackbar globale -->
+    <transition name="snackbar">
+      <div v-if="notificationStore.notification.show" :class="['snackbar', notificationStore.notification.type]">
+        <i :class="notificationStore.notification.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <span>{{ notificationStore.notification.message }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { useNotificationStore } from '@/stores/notification';
 
 const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
 const messages = ref([]);
 const user = ref({});
 const isEditing = ref(false);
-const editableUser = ref({});
+const editForm = ref({
+  job_title: '',
+  team: ''
+});
 
-const userLabels = {
-    timeInCompany: 'In azienda da',
-    department: 'Dipartimento',
-    role: 'Posizione/ruolo',
-    manager: 'Responsabile',
-    project: 'Progetti',
-    birthDate: 'Data di nascita',
-    positionLocation: 'Posizione dell\'ufficio',
-    education: 'Istruzione',
-    courses: 'Corsi e formazione',
-    certifications: 'Certificati',
-    languages: 'Conoscenza delle lingue'
+// Funzione per ottenere le iniziali
+const getInitials = (nome, cognome) => {
+    if (!nome || !cognome) return '';
+    return (nome.charAt(0) + cognome.charAt(0)).toUpperCase();
 };
 
-const userDisplayData = computed(() => {
-    const displayData = {};
-    for (const key in userLabels) {
-        if (user.value[key]) {
-            displayData[userLabels[key]] = user.value[key];
-        }
+const toggleEditMode = async () => {
+  if (isEditing.value) {
+    // Salva le modifiche
+    await saveProfile();
+  } else {
+    // Entra in modalità modifica
+    editForm.value.job_title = user.value.job_title || '';
+    editForm.value.team = user.value.team || '';
+    isEditing.value = true;
+  }
+};
+
+const saveProfile = async () => {
+  try {
+    const response = await axios.put('http://localhost:3001/api/profile', {
+      job_title: editForm.value.job_title,
+      team: editForm.value.team
+    }, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+    
+    if (response.data.success) {
+      // Aggiorna i dati locali
+      user.value.job_title = editForm.value.job_title;
+      user.value.team = editForm.value.team;
+      isEditing.value = false;
+      
+      // Mostra notifica di successo
+      notificationStore.showNotification('Profilo aggiornato con successo!', 'success');
     }
-    return displayData;
-});
+  } catch (error) {
+    console.error('Errore nel salvataggio del profilo:', error);
+    notificationStore.showNotification('Errore nel salvataggio delle modifiche. Riprova.', 'error');
+  }
+};
 
 const handleLogout = () => {
     authStore.logout();
 };
 
-const startEditing = () => {
-    isEditing.value = true;
-    // Copia i dati attuali nel form di modifica
-    editableUser.value = { ...user.value };
-};
-
-const cancelEditing = () => {
-    isEditing.value = false;
-    editableUser.value = {};
-};
-
-const saveProfile = async () => {
-    try {
-        const response = await axios.put('http://localhost:3001/api/user/profile', editableUser.value);
-        if (response.data.success) {
-            user.value = response.data.profile;
-            isEditing.value = false;
-            alert('Profilo aggiornato con successo!');
-        }
-    } catch (error) {
-        console.error('Errore nell\'aggiornamento del profilo:', error);
-        alert('Errore nell\'aggiornamento del profilo');
-    }
-};
-
 onMounted(async () => {
   try {
     const messagesResponse = await axios.get('http://localhost:3001/api/messages');
-    messages.value = messagesResponse.data;
+    messages.value = messagesResponse.data.messages || [];
 
-    const userResponse = await axios.get('http://localhost:3001/api/user/profile');
-    user.value = userResponse.data;
+    const profileResponse = await axios.get('http://localhost:3001/api/profile', {
+        headers: {
+            'Authorization': `Bearer ${authStore.token}`
+        }
+    });
+    user.value = profileResponse.data.profile;
   } catch (error) {
     console.error("Errore nel caricamento dei dati:", error);
   }
@@ -231,13 +243,107 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 .message-author div { display: flex; flex-direction: column; }
 .message-author small { color: var(--text-light); font-size: 0.8rem; }
 .message-content { color: var(--text-light); line-height: 1.5; margin: 0; }
-.profile-picture {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: 8px;
+
+.avatar-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  color: white;
+  margin: 0 auto 1rem auto;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.user-name {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.25rem 0;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.user-email {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  text-align: center;
   margin-bottom: 1.5rem;
 }
+
+.user-job, .user-team {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  text-align: center;
+  margin: 0.3rem 0;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.profile-header h2 {
+  margin: 0;
+}
+
+.edit-btn {
+  padding: 0.5rem 1rem;
+  background-color: #4ECDC4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.edit-btn:hover {
+  background-color: #45b8b0;
+}
+
+.edit-form {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4ECDC4;
+}
+
 .profile-details .detail-item {
   display: flex;
   flex-direction: column;
@@ -265,103 +371,76 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   line-height: 1.4;
 }
 
-.profile-edit-form {
-  margin-bottom: 1rem;
-}
-
-.edit-item {
-  margin-bottom: 1rem;
-}
-
-.edit-label {
-  display: block;
-  color: var(--text-light);
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
-}
-
-.edit-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  box-sizing: border-box;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-.edit-input:focus {
-  outline: none;
-  border-color: #4B0082;
-  box-shadow: 0 0 0 3px rgba(75, 0, 130, 0.1);
-}
-
-.profile-actions {
-  margin-top: 1.5rem;
-}
-
-.edit-button {
-  width: 100%;
-  padding: 0.8rem;
-  background-color: var(--primary-purple);
-  border: none;
+/* Snackbar Styles */
+.snackbar {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
   border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
-}
-
-.edit-button:hover {
-  background-color: #d6d3ff;
-  transform: translateY(-1px);
-}
-
-.edit-button .fas { margin-right: 0.5rem; }
-
-.edit-actions {
   display: flex;
-  gap: 0.75rem;
-}
-
-.save-button, .cancel-button {
-  flex: 1;
-  padding: 0.8rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  backdrop-filter: blur(10px);
 }
 
-.save-button {
-  background-color: #28a745;
+.snackbar.success {
+  background-color: #10b981;
   color: white;
 }
 
-.save-button:hover {
-  background-color: #218838;
-  transform: translateY(-1px);
-}
-
-.cancel-button {
-  background-color: #6c757d;
+.snackbar.error {
+  background-color: #ef4444;
   color: white;
 }
 
-.cancel-button:hover {
-  background-color: #5a6268;
-  transform: translateY(-1px);
+.snackbar i {
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
-.save-button .fas, .cancel-button .fas {
-  margin-right: 0.5rem;
+.snackbar span {
+  flex: 1;
+  line-height: 1.4;
 }
+
+/* Animazioni Snackbar */
+.snackbar-enter-active {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.snackbar-leave-active {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .main-panel { grid-template-columns: 1fr; }
   .quick-actions { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }

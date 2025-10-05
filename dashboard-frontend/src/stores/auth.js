@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useNotificationStore } from './notification';
 
 export const useAuthStore = defineStore('auth', () => {
     // Inizializza il token dal localStorage per mantenere il login
@@ -35,33 +36,37 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function register(name, email, password) {
+    async function register(username, email, password, nome, cognome, jobTitle, team, avatar) {
+        const notificationStore = useNotificationStore();
+        
         try {
-            const response = await axios.post('http://localhost:3001/api/register', { name, email, password });
-            if (response.data.success) {
-                setToken(response.data.token);
-                alert('Registrazione completata con successo!');
-                // Usa il router per reindirizzare alla dashboard
-                router.push({ name: 'Dashboard' }); 
-            }
-        } catch (error) {
-            console.error('Errore di registrazione:', error.response?.data?.message || error.message);
-            alert(error.response?.data?.message || 'Errore durante la registrazione!');
-        }
-    }
-
-    async function registerWithProfile(registrationData) {
-        try {
+            const registrationData = { 
+                username, 
+                email, 
+                password,
+                nome,
+                cognome,
+                jobTitle,
+                team,
+                avatar
+            };
+            
             const response = await axios.post('http://localhost:3001/api/register', registrationData);
             if (response.data.success) {
                 setToken(response.data.token);
-                alert('Registrazione completata con successo!');
-                // Usa il router per reindirizzare alla dashboard
-                router.push({ name: 'Dashboard' }); 
+                
+                // Naviga alla dashboard e mostra notifica di successo
+                router.push({ name: 'Dashboard' });
+                
+                // Mostra la notifica dopo un piccolo delay per dare tempo al componente di montarsi
+                setTimeout(() => {
+                    notificationStore.showNotification('Registrazione completata con successo! Benvenuto nella dashboard.', 'success');
+                }, 100);
             }
         } catch (error) {
             console.error('Errore di registrazione:', error.response?.data?.message || error.message);
-            alert(error.response?.data?.message || 'Errore durante la registrazione!');
+            // Rilancia l'errore in modo che possa essere gestito dal componente
+            throw error;
         }
     }
 
@@ -71,5 +76,5 @@ export const useAuthStore = defineStore('auth', () => {
         router.push({ name: 'Login' });
     }
 
-    return { token, isAuthenticated, login, register, registerWithProfile, logout };
+    return { token, isAuthenticated, login, register, logout };
 });

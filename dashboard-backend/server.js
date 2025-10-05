@@ -1,151 +1,264 @@
 const express = require('express');
 const cors = require('cors');
+const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- Dati Finti (Mock Data) ---
-
-const mockMessages = [
-    { id: 1, author: 'Alisa Filatova', avatar: '...', timestamp: '20 Aprile alle 14:22', content: 'Le considerazioni ideologiche di alto livello, così come la struttura organizzativa consolidata, consentono di valutare l\'importanza dei sistemi di partecipazione di massa.' },
-    { id: 2, author: 'Poljakova Maia', avatar: '...', timestamp: '19 Aprile alle 16:55', content: 'L\'importanza di questi problemi è così evidente che il nuovo modello di attività organizzativa contribuisce alla preparazione e realizzazione di ulteriori direzioni di sviluppo.' },
-    { id: 3, author: 'Aleksandrov Evgenij', avatar: '...', timestamp: '19 Aprile alle 15:04', content: 'Pertanto, la struttura organizzativa consolidata gioca un ruolo importante nella formazione delle direzioni di sviluppo progressivo.' },
-    { id: 4, author: 'Gnezdilova Alina', avatar: '...', timestamp: '19 Aprile alle 14:30', content: 'Tuttavia, non bisogna dimenticare che i confini e il luogo di formazione del personale richiedono la definizione e la chiarificazione delle posizioni occupate dai partecipanti rispetto agli obiettivi posti.' },
-    { id: 5, author: 'Kakurin Bergey', avatar: '...', timestamp: '19 Aprile alle 14:28', content: 'D\'altra parte, la continua crescita quantitativa e l\'ambito della nostra attività giocano un ruolo importante nella formazione delle condizioni corrispondenti per l\'attivazione.' }
-];
-
-const mockUserProfile = {
-    name: 'Jane Doe',
-    profileImageUrl: 'https://images.unsplash.com/photo-1594744806549-83a81231315a?auto=format&fit=crop&w=400&q=80',
-    timeInCompany: '3 anni 28 giorni',
-    department: 'Team Sviluppo Front-End',
-    role: 'Tech Lead',
-    manager: 'Pietro Rossi',
-    project: 'Hero Wars Mobile Unity',
-    birthDate: '15 gennaio 1991',
-    positionLocation: 'Mosca',
-    education: 'Laurea in Ingegneria - Ricercatore nel campo della nanotecnica',
-    courses: 'Data Science by Afeasian University nel 2017',
-    certifications: 'Nessuno',
-    languages: 'Inglese, Russo, Spagnolo'
+// Database connection
+const dbConfig = {
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'dashboard_db'
 };
 
-// --- Dati utenti registrati (simulazione database) ---
-const registeredUsers = [
-    { id: 1, email: 'johndoe@example.com', password: 'password123', name: 'John Doe' }
-];
+let db;
 
-// --- API Endpoints ---
-
-// Endpoint per la REGISTRAZIONE
-app.post('/api/register', (req, res) => {
-    const { name, email, password, profile } = req.body;
-    console.log(`Tentativo di registrazione: ${name} - ${email}`);
-
-    // Verifica se l'utente esiste già
-    const existingUser = registeredUsers.find(user => user.email === email);
-    if (existingUser) {
-        return res.status(400).json({
-            success: false,
-            message: 'Un utente con questa email è già registrato.'
+// Initialize database
+async function initDB() {
+    try {
+        // First connect without database to create it
+        const tempDb = await mysql.createConnection({
+            host: 'localhost',
+            user: 'root',
+            password: ''
         });
+        
+        await tempDb.execute('CREATE DATABASE IF NOT EXISTS dashboard_db');
+        await tempDb.end();
+        
+        // Now connect to the specific database
+        db = await mysql.createConnection(dbConfig);
+        console.log('✅ Connesso a MySQL');
+
+        // Create tables
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS profiles (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                nome VARCHAR(50) NOT NULL,
+                cognome VARCHAR(50) NOT NULL,
+                job_title VARCHAR(100),
+                team VARCHAR(50),
+                avatar VARCHAR(20) DEFAULT '#4ECDC4',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        `);
+
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                content TEXT NOT NULL,
+                author VARCHAR(100) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Add sample messages if empty
+        const [messages] = await db.execute('SELECT COUNT(*) as count FROM messages');
+        if (messages[0].count === 0) {
+            await db.execute(`
+                INSERT INTO messages (title, content, author) VALUES 
+                ('Benvenuto nella Dashboard', 'Questa è la tua dashboard personale. Qui puoi visualizzare messaggi e gestire il tuo profilo.', 'Sistema'),
+                ('Aggiornamento Sistema', 'Il sistema è stato aggiornato con nuove funzionalità per migliorare la tua esperienza.', 'Admin'),
+                ('Promemoria', 'Ricordati di aggiornare le tue informazioni di profilo se necessario.', 'HR')
+            `);
+        }
+
+    } catch (error) {
+        console.error('❌ Errore database:', error);
+        process.exit(1);
     }
+}
 
-    // Validazione semplice
-    if (!name || !email || !password) {
-        return res.status(400).json({
-            success: false,
-            message: 'Tutti i campi sono obbligatori.'
-        });
-    }
+// API Endpoints
+app.post('/api/register', async (req, res) => {
+    try {
+        const { username, email, password, nome, cognome, jobTitle, team, avatar } = req.body;
 
-    if (password.length < 6) {
-        return res.status(400).json({
-            success: false,
-            message: 'La password deve essere di almeno 6 caratteri.'
-        });
-    }
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Aggiungi nuovo utente
-    const newUser = {
-        id: registeredUsers.length + 1,
-        name,
-        email,
-        password
-    };
-    registeredUsers.push(newUser);
+        // Insert user
+        const [result] = await db.execute(
+            'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+            [username, email, hashedPassword]
+        );
 
-    // Se sono stati forniti dati del profilo, aggiorna il mockUserProfile
-    if (profile) {
-        Object.assign(mockUserProfile, {
-            name: name,
-            ...profile
-        });
-    }
+        // Insert profile
+        await db.execute(
+            'INSERT INTO profiles (user_id, nome, cognome, job_title, team, avatar) VALUES (?, ?, ?, ?, ?, ?)',
+            [result.insertId, nome, cognome, jobTitle, team, avatar || '#4ECDC4']
+        );
 
-    res.json({
-        success: true,
-        message: 'Registrazione completata con successo!',
-        token: 'fake-jwt-token-for-demo-purposes'
-    });
-});
-
-// Endpoint per il LOGIN
-app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
-    console.log(`Tentativo di login con email: ${email}`);
-
-    // Verifica le credenziali contro gli utenti registrati
-    const user = registeredUsers.find(u => u.email === email && u.password === password);
-    if (user) {
         res.json({
             success: true,
-            message: 'Login effettuato con successo!',
-            token: 'fake-jwt-token-for-demo-purposes'
+            message: 'Registrazione completata',
+            token: 'demo-token-' + result.insertId
         });
-    } else {
-        res.status(401).json({
+
+    } catch (error) {
+        console.error('Errore registrazione:', error);
+        res.status(500).json({
             success: false,
-            message: 'Email o password non validi.'
+            message: 'Errore durante la registrazione'
         });
     }
 });
 
-// Endpoint per ottenere i messaggi
-app.get('/api/messages', (req, res) => {
-    res.json(mockMessages);
-});
+app.post('/api/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-// Endpoint per ottenere il profilo utente
-app.get('/api/user/profile', (req, res) => {
-    res.json(mockUserProfile);
-});
-
-// Endpoint per aggiornare il profilo utente
-app.put('/api/user/profile', (req, res) => {
-    const updateData = req.body;
-    console.log('Aggiornamento profilo:', updateData);
-
-    // In una vera applicazione, qui aggiorneresti il database
-    // Per ora aggiorniamo il mock object
-    Object.keys(updateData).forEach(key => {
-        if (mockUserProfile.hasOwnProperty(key)) {
-            mockUserProfile[key] = updateData[key];
+        // Find user
+        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Credenziali non valide'
+            });
         }
-    });
 
-    res.json({
-        success: true,
-        message: 'Profilo aggiornato con successo!',
-        profile: mockUserProfile
-    });
+        const user = users[0];
+
+        // Check password
+        const isValid = await bcrypt.compare(password, user.password);
+        if (!isValid) {
+            return res.status(400).json({
+                success: false,
+                message: 'Credenziali non valide'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Login effettuato',
+            token: 'demo-token-' + user.id,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email
+            }
+        });
+
+    } catch (error) {
+        console.error('Errore login:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante il login'
+        });
+    }
 });
 
-// Avvio del server
-app.listen(PORT, () => {
-    console.log(`🚀 Backend server in ascolto su http://localhost:${PORT}`);
+app.get('/api/profile', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Token mancante' });
+        }
+
+        // Extract user ID from token (demo implementation)
+        const userId = token.replace('demo-token-', '');
+
+        const [profiles] = await db.execute(`
+            SELECT p.*, u.username, u.email 
+            FROM profiles p 
+            JOIN users u ON p.user_id = u.id 
+            WHERE p.user_id = ?
+        `, [userId]);
+
+        if (profiles.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Profilo non trovato'
+            });
+        }
+
+        res.json({
+            success: true,
+            profile: profiles[0]
+        });
+
+    } catch (error) {
+        console.error('Errore profilo:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante il recupero del profilo'
+        });
+    }
 });
+
+app.put('/api/profile', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Token mancante' });
+        }
+
+        // Extract user ID from token (demo implementation)
+        const userId = token.replace('demo-token-', '');
+        const { job_title, team } = req.body;
+
+        await db.execute(`
+            UPDATE profiles 
+            SET job_title = ?, team = ? 
+            WHERE user_id = ?
+        `, [job_title, team, userId]);
+
+        res.json({
+            success: true,
+            message: 'Profilo aggiornato con successo'
+        });
+
+    } catch (error) {
+        console.error('Errore aggiornamento profilo:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante l\'aggiornamento del profilo'
+        });
+    }
+});
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        const [messages] = await db.execute('SELECT * FROM messages ORDER BY created_at DESC');
+        res.json({
+            success: true,
+            messages
+        });
+    } catch (error) {
+        console.error('Errore messaggi:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante il recupero dei messaggi'
+        });
+    }
+});
+
+// Start server
+async function startServer() {
+    await initDB();
+    app.listen(PORT, () => {
+        console.log(`🚀 Server in esecuzione su http://localhost:${PORT}`);
+    });
+}
+
+startServer();

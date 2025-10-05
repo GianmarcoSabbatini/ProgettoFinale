@@ -6,10 +6,6 @@
       
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-            <label for="name">Nome e cognome</label>
-            <input type="text" id="name" value="John">
-        </div>
-        <div class="form-group">
           <label for="email">Indirizzo email</label>
           <input type="email" id="email" v-model="form.email" required>
         </div>

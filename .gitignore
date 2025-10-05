@@ -7,12 +7,28 @@ dashboard-backend/node_modules/
 dist/
 build/
 
-# Environment variables
+# Environment variables - IMPORTANTE: Non committare mai file .env!
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+dashboard-backend/.env
+
+# Logs directory
+dashboard-backend/logs/
+dashboard-frontend/logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Cache directories
+.cache/
+*.cache/
 
 # IDE/Editor files
 .vscode/

@@ -15,10 +15,6 @@
         <!-- Step 1: Dati account -->
         <div v-if="currentStep === 1" class="step-content">
           <div class="form-group">
-            <label for="name">Nome e cognome</label>
-            <input type="text" id="name" v-model="form.name" required>
-          </div>
-          <div class="form-group">
             <label for="email">Indirizzo email</label>
             <input type="email" id="email" v-model="form.email" required>
           </div>
@@ -35,44 +31,26 @@
         <!-- Step 2: Dati profilo -->
         <div v-if="currentStep === 2" class="step-content">
           <div class="form-group">
-            <label for="department">Dipartimento</label>
-            <input type="text" id="department" v-model="form.department" placeholder="es. Team Sviluppo Front-End" required>
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" v-model="form.nome" placeholder="es. Mario" required>
           </div>
           <div class="form-group">
-            <label for="role">Posizione/ruolo</label>
-            <input type="text" id="role" v-model="form.role" placeholder="es. Tech Lead" required>
+            <label for="cognome">Cognome</label>
+            <input type="text" id="cognome" v-model="form.cognome" placeholder="es. Rossi" required>
           </div>
           <div class="form-group">
-            <label for="manager">Responsabile</label>
-            <input type="text" id="manager" v-model="form.manager" placeholder="es. Pietro Rossi" required>
+            <label for="jobTitle">Job Title</label>
+            <input type="text" id="jobTitle" v-model="form.jobTitle" placeholder="es. Frontend Developer" required>
           </div>
           <div class="form-group">
-            <label for="project">Progetti</label>
-            <input type="text" id="project" v-model="form.project" placeholder="es. Hero Wars Mobile Unity" required>
-          </div>
-          <div class="form-group">
-            <label for="birthDate">Data di nascita</label>
-            <input type="text" id="birthDate" v-model="form.birthDate" placeholder="es. 15 gennaio 1991" required>
-          </div>
-          <div class="form-group">
-            <label for="positionLocation">Posizione dell'ufficio</label>
-            <input type="text" id="positionLocation" v-model="form.positionLocation" placeholder="es. Milano" required>
-          </div>
-          <div class="form-group">
-            <label for="education">Istruzione</label>
-            <input type="text" id="education" v-model="form.education" placeholder="es. Laurea in Informatica" required>
-          </div>
-          <div class="form-group">
-            <label for="courses">Corsi e formazione</label>
-            <input type="text" id="courses" v-model="form.courses" placeholder="es. React Certification 2023">
-          </div>
-          <div class="form-group">
-            <label for="certifications">Certificati</label>
-            <input type="text" id="certifications" v-model="form.certifications" placeholder="es. AWS Certified">
-          </div>
-          <div class="form-group">
-            <label for="languages">Conoscenza delle lingue</label>
-            <input type="text" id="languages" v-model="form.languages" placeholder="es. Italiano, Inglese, Spagnolo" required>
+            <label for="team">Team di appartenenza</label>
+            <select id="team" v-model="form.team" required>
+              <option value="" disabled>Seleziona un team</option>
+              <option value="Design">Design</option>
+              <option value="Development">Development</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Human Resources">Human Resources</option>
+            </select>
           </div>
         </div>
 
@@ -88,49 +66,80 @@
         <p>Hai già un account? <router-link to="/login">Accedi qui</router-link></p>
       </div>
     </div>
+
+    <!-- Snackbar -->
+    <transition name="snackbar">
+      <div v-if="snackbar.show" :class="['snackbar', snackbar.type]">
+        <i :class="snackbar.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <span>{{ snackbar.message }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 const currentStep = ref(1);
 
+// Snackbar state
+const snackbar = reactive({
+  show: false,
+  message: '',
+  type: 'success' // 'success' o 'error'
+});
+
+const showSnackbar = (message, type = 'success') => {
+  snackbar.message = message;
+  snackbar.type = type;
+  snackbar.show = true;
+  
+  setTimeout(() => {
+    snackbar.show = false;
+  }, 4000); // Nasconde dopo 4 secondi
+};
+
+// Colori disponibili per gli avatar
+const avatarColors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8', '#FDCB6E',
+    '#6C5CE7', '#00B894', '#E17055', '#0984E3', '#D63031'
+];
+
+// Funzione per generare un colore casuale dall'array
+const getRandomColor = () => {
+    return avatarColors[Math.floor(Math.random() * avatarColors.length)];
+};
+
 const form = reactive({
   // Step 1: Dati account
-  name: '',
   email: '',
   password: '',
   confirmPassword: '',
   // Step 2: Dati profilo
-  department: '',
-  role: '',
-  manager: '',
-  project: '',
-  birthDate: '',
-  positionLocation: '',
-  education: '',
-  courses: '',
-  certifications: '',
-  languages: ''
+  nome: '',
+  cognome: '',
+  jobTitle: '',
+  team: '',
+  avatarColor: getRandomColor() // Colore generato automaticamente
 });
 
 const nextStep = () => {
   // Validazione step 1
-  if (!form.name || !form.email || !form.password || !form.confirmPassword) {
-    alert('Per favore, compila tutti i campi.');
+  if (!form.email || !form.password || !form.confirmPassword) {
+    showSnackbar('Per favore, compila tutti i campi.', 'error');
     return;
   }
   
   if (form.password !== form.confirmPassword) {
-    alert('Le password non coincidono.');
+    showSnackbar('Le password non coincidono.', 'error');
     return;
   }
   
   if (form.password.length < 6) {
-    alert('La password deve essere di almeno 6 caratteri.');
+    showSnackbar('La password deve essere di almeno 6 caratteri.', 'error');
     return;
   }
   
@@ -149,38 +158,43 @@ const handleSubmit = () => {
   }
 };
 
-const handleRegister = () => {
+const handleRegister = async () => {
   // Validazione step 2
-  const requiredFields = ['department', 'role', 'manager', 'project', 'birthDate', 'positionLocation', 'education', 'languages'];
-  const missingFields = requiredFields.filter(field => !form[field]);
-  
-  if (missingFields.length > 0) {
-    alert('Per favore, compila tutti i campi obbligatori.');
+  if (!form.nome || !form.cognome || !form.jobTitle || !form.team) {
+    showSnackbar('Per favore, compila tutti i campi.', 'error');
     return;
   }
   
   // Prepara i dati per la registrazione
   const registrationData = {
-    name: form.name,
+    username: form.email.split('@')[0],
     email: form.email,
     password: form.password,
-    profile: {
-      department: form.department,
-      role: form.role,
-      manager: form.manager,
-      project: form.project,
-      birthDate: form.birthDate,
-      positionLocation: form.positionLocation,
-      education: form.education,
-      courses: form.courses || 'Nessuno',
-      certifications: form.certifications || 'Nessuno',
-      languages: form.languages,
-      timeInCompany: '0 giorni', // Nuovo utente
-      profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80' // Avatar di default
-    }
+    nome: form.nome,
+    cognome: form.cognome,
+    jobTitle: form.jobTitle,
+    team: form.team,
+    avatar: form.avatarColor
   };
   
-  authStore.registerWithProfile(registrationData);
+  try {
+    await authStore.register(
+      registrationData.username,
+      registrationData.email,
+      registrationData.password,
+      registrationData.nome,
+      registrationData.cognome,
+      registrationData.jobTitle,
+      registrationData.team,
+      registrationData.avatar
+    );
+    
+    // Se la registrazione ha successo, lo store gestirà il redirect e la notifica
+  } catch (error) {
+    // Gestione errori
+    const errorMessage = error.response?.data?.message || 'Errore durante la registrazione. Riprova.';
+    showSnackbar(errorMessage, 'error');
+  }
 };
 </script>
 
@@ -288,7 +302,8 @@ h1 {
     font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 14px;
     border: 1px solid #ddd;
@@ -297,9 +312,11 @@ h1 {
     font-family: 'Inter', sans-serif;
     box-sizing: border-box;
     transition: border-color 0.3s, box-shadow 0.3s;
+    background-color: white;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: #4B0082;
     box-shadow: 0 0 0 3px rgba(75, 0, 130, 0.1);
@@ -370,5 +387,75 @@ h1 {
 
 .login-link a:hover {
     text-decoration: underline;
+}
+
+/* Snackbar Styles */
+.snackbar {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+
+.snackbar.success {
+  background-color: #10b981;
+  color: white;
+}
+
+.snackbar.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.snackbar i {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.snackbar span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Animazioni Snackbar */
+.snackbar-enter-active {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.snackbar-leave-active {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
 }
 </style>
