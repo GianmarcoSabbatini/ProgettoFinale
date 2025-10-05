@@ -60,7 +60,7 @@
             <h2>Su di te</h2>
             <button @click="toggleEditMode" class="edit-btn">
               <i :class="isEditing ? 'fas fa-save' : 'fas fa-edit'"></i> 
-              {{ isEditing ? 'Salva le modifiche' : 'Modifica' }}
+              <span>{{ isEditing ? 'Salva le modifiche' : 'Modifica' }}</span>
             </button>
           </div>
           <div class="avatar-circle" :style="{ backgroundColor: user.avatar || '#4ECDC4' }">
@@ -69,8 +69,11 @@
           <h3 class="user-name">{{ user.nome }} {{ user.cognome }}</h3>
           <p class="user-email">{{ user.email }}</p>
           
+          <!-- Divider -->
+          <div class="profile-divider"></div>
+          
           <!-- Modalità visualizzazione -->
-          <div v-if="!isEditing">
+          <div v-if="!isEditing" class="profile-details">
             <p v-if="user.job_title" class="user-job"><strong>Job Title:</strong> {{ user.job_title }}</p>
             <p v-if="user.team" class="user-team"><strong>Team:</strong> {{ user.team }}</p>
           </div>
@@ -189,36 +192,50 @@ onMounted(async () => {
 
 <style scoped>
 /* Stili della Dashboard */
-:root {
-  --card-background: #ffffff;
-  --primary-purple: #e8e6ff;
-  --text-color: #333;
-  --text-light: #777;
-  --border-color: #e0e0e0;
-}
 #app-container {
   width: 100%;
+  min-height: 100vh;
+  background-color: #fafafb;
+  font-family: 'DM Sans', sans-serif;
 }
 .main-header {
   display: flex;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--card-background);
-  border-bottom: 1px solid var(--border-color);
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
 }
 .logo { font-size: 1.5rem; font-weight: bold; }
 .main-nav { margin: 0 auto; display: flex; gap: 1.5rem; }
-.nav-link { text-decoration: none; color: var(--text-light); font-weight: 500; }
-.nav-link.active { color: var(--text-color); }
-.header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: var(--text-light); }
-.logout-button { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 1.2rem; padding: 0; }
+.nav-link { text-decoration: none; color: #777; font-weight: 500; }
+.nav-link.active { color: #333; }
+.header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: #777; }
+.action-icon {
+  background-color: #fafafb;
+  padding: 0.6rem;
+  border-radius: 100%;
+  border: 1px solid #e7e7ee;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.action-icon:hover {
+  background-color: #e8e6ff;
+}
+.logout-button { 
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  color: #777; 
+  font-size: 1.2rem; 
+  padding: 0; 
+}
 .dashboard-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 .quick-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
 .action-card {
   flex: 1;
-  background-color: var(--primary-purple);
-  border: none;
-  border-radius: 12px;
+  background-color: #e8e1f9;
+  border: 2px solid #e8e1f9;
+  border-radius: 16px;
   padding: 1.5rem 1rem;
   text-align: center;
   font-size: 0.9rem;
@@ -226,23 +243,25 @@ onMounted(async () => {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.action-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.08); }
-.action-card .icon { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; color: #4B0082; }
+.action-card:hover { border: 2px solid #4b00e9; transition: ease-in 0.2s; }
+.action-card .icon { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; color: #4b00e9; }
 .main-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
 h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 .message-board, .user-profile {
-  background-color: var(--card-background);
+  background-color: #ffffff;
   border-radius: 12px;
+  border: 1px solid #e7e7ee;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
-.message-item { border-bottom: 1px solid var(--border-color); padding: 1rem 0; }
+.action-card span {font-family: 'DM Sans', sans-serif; color: #4b00e9;}
+.message-item { border-bottom: 1px solid #e0e0e0; padding: 1rem 0; }
 .message-item:last-child { border-bottom: none; }
 .message-author { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #ccc; }
 .message-author div { display: flex; flex-direction: column; }
-.message-author small { color: var(--text-light); font-size: 0.8rem; }
-.message-content { color: var(--text-light); line-height: 1.5; margin: 0; }
+.message-author small { color: #777; font-size: 0.8rem; }
+.message-content { color: #777; line-height: 1.5; margin: 0; }
 
 .avatar-circle {
   width: 120px;
@@ -263,21 +282,32 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   font-weight: 600;
   margin: 0.5rem 0 0.25rem 0;
   text-align: center;
-  color: var(--text-color);
+  color: #333;
 }
 
 .user-email {
   font-size: 0.9rem;
-  color: var(--text-light);
+  color: #777;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+}
+
+.profile-divider {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.profile-details {
+  text-align: left;
 }
 
 .user-job, .user-team {
-  font-size: 0.85rem;
-  color: var(--text-color);
-  text-align: center;
-  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: #333;
+  text-align: left;
+  margin: 0.5rem 0;
+  line-height: 1.6;
 }
 
 .profile-header {
@@ -292,22 +322,35 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 }
 
 .edit-btn {
-  padding: 0.5rem 1rem;
-  background-color: #4ECDC4;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  background-color: transparent;
+  color: #4b00e9;
+  border: 2px solid #4b00e9;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+}
+
+.edit-btn i {
+  font-size: 1rem;
+}
+
+.edit-btn span {
+  text-decoration: underline;
 }
 
 .edit-btn:hover {
-  background-color: #45b8b0;
+  background-color: #4b00e9;
+  color: white;
+}
+
+.edit-btn:hover span {
+  text-decoration: none;
 }
 
 .edit-form {
@@ -325,14 +368,14 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-color);
+  color: #333;
   margin-bottom: 0.5rem;
 }
 
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid #e0e0e0;
   border-radius: 6px;
   font-size: 0.9rem;
   transition: border-color 0.3s;
@@ -348,7 +391,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   display: flex;
   flex-direction: column;
   padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e0e0e0;
   font-size: 0.9rem;
   gap: 0.25rem;
 }
@@ -358,7 +401,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 }
 
 .detail-label { 
-  color: var(--text-light); 
+  color: #777; 
   font-size: 0.8rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -366,7 +409,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 }
 
 .detail-value {
-  color: var(--text-color);
+  color: #333;
   font-weight: 500;
   line-height: 1.4;
 }

@@ -222,6 +222,7 @@ const handleRegister = async () => {
     box-sizing: border-box;
     text-align: center;
     margin: 20px;
+    font-family: 'DM Sans', sans-serif;
 }
 
 h1 {

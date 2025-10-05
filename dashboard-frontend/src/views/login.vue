@@ -71,6 +71,7 @@ const handleLogin = () => {
     box-sizing: border-box;
     text-align: center;
     margin: 20px;
+    font-family: 'DM Sans', sans-serif;
 }
 h1 {
     margin: 0 0 10px;
