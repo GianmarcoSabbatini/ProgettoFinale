@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth';
 import Login from '../views/login.vue';
 import Register from '../views/Register.vue';
 import Dashboard from '../views/dashboard.vue';
+import BustePaga from '../views/BustePaga.vue';
 
 const routes = [
     { 
@@ -23,6 +24,12 @@ const routes = [
       path: '/dashboard', 
       name: 'Dashboard', 
       component: Dashboard,
+      meta: { requiresAuth: true } // Questa rotta richiede l'autenticazione
+    },
+    { 
+      path: '/buste-paga', 
+      name: 'BustePaga', 
+      component: BustePaga,
       meta: { requiresAuth: true } // Questa rotta richiede l'autenticazione
     },
 ];

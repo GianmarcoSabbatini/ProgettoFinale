@@ -55,10 +55,10 @@
 
     <main class="dashboard-content">
       <section class="quick-actions">
-        <button class="action-card">
-          <i class="fas fa-file-alt icon"></i>
-          <span>Documenti</span>
-        </button>
+        <router-link to="/buste-paga" class="action-card">
+          <i class="fas fa-file-invoice-dollar icon"></i>
+          <span>Buste Paga</span>
+        </router-link>
         <button class="action-card">
           <i class="fas fa-users icon"></i>
           <span>HR Policies</span>
@@ -845,6 +845,8 @@ onMounted(async () => {
   font-weight: 500;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  display: block;
 }
 .action-card:hover { border: 2px solid #4b00e9; transition: ease-in 0.2s; }
 .action-card .icon { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; color: #4b00e9; }
