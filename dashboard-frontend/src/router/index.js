@@ -4,6 +4,8 @@ import Login from '../views/login.vue';
 import Register from '../views/Register.vue';
 import Dashboard from '../views/dashboard.vue';
 import BustePaga from '../views/BustePaga.vue';
+import Timesheet from '../views/Timesheet.vue';
+import RimborsoSpese from '../views/RimborsoSpese.vue';
 
 const routes = [
     { 
@@ -30,6 +32,18 @@ const routes = [
       path: '/buste-paga', 
       name: 'BustePaga', 
       component: BustePaga,
+      meta: { requiresAuth: true } // Questa rotta richiede l'autenticazione
+    },
+    { 
+      path: '/timesheet', 
+      name: 'Timesheet', 
+      component: Timesheet,
+      meta: { requiresAuth: true } // Questa rotta richiede l'autenticazione
+    },
+    { 
+      path: '/rimborso-spese', 
+      name: 'RimborsoSpese', 
+      component: RimborsoSpese,
       meta: { requiresAuth: true } // Questa rotta richiede l'autenticazione
     },
 ];

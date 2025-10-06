@@ -9,22 +9,14 @@
         <i class="fas fa-file-invoice-dollar icon"></i>
         <span>Buste Paga</span>
       </router-link>
-      <button class="action-card">
-        <i class="fas fa-users icon"></i>
-        <span>HR Policies</span>
-      </button>
-      <button class="action-card">
-        <i class="fas fa-calendar-alt icon"></i>
-        <span>Eventi aziendali</span>
-      </button>
-      <button class="action-card">
+      <router-link to="/timesheet" class="action-card">
         <i class="fas fa-clock icon"></i>
         <span>Timesheet</span>
-      </button>
-      <button class="action-card">
+      </router-link>
+      <router-link to="/rimborso-spese" class="action-card">
         <i class="fas fa-wallet icon"></i>
         <span>Rimborso spese</span>
-      </button>
+      </router-link>
     </section>
 
     <!-- Main Content -->
@@ -240,8 +232,8 @@ const filterBustePaga = () => {
 
 /* Quick Actions (identiche alla dashboard) */
 .quick-actions { 
-  display: grid; 
-  grid-template-columns: repeat(5, 1fr); 
+  display: flex; 
+  justify-content: center; 
   gap: 1rem; 
   margin-bottom: 2rem;
   padding: 2rem 2rem 0 2rem;
@@ -251,7 +243,9 @@ const filterBustePaga = () => {
 }
 
 .action-card {
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 180px;
+  max-width: 220px;
   background-color: #e8e1f9;
   border: 2px solid #e8e1f9;
   border-radius: 16px;
@@ -538,24 +532,48 @@ const filterBustePaga = () => {
   color: #999;
 }
 
-/* Responsive */
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .quick-actions { flex-wrap: wrap; gap: 0.75rem; padding: 1.5rem 1.5rem 0 1.5rem; }
+  .action-card { padding: 1.25rem 0.75rem; min-width: 150px; }
+  .action-card .icon { font-size: 1.3rem; }
+  .action-card span { font-size: 0.85rem; }
+  .buste-paga-content { padding: 1.5rem; }
+  .buste-paga-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+}
+
 @media (max-width: 768px) {
-  .page-title {
-    font-size: 2rem;
-  }
+  .quick-actions { flex-direction: column; gap: 0.75rem; padding: 1rem 1rem 0 1rem; }
+  .action-card { padding: 1rem 0.5rem; max-width: 100%; }
+  .action-card .icon { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .action-card span { font-size: 0.8rem; }
+  .buste-paga-content { padding: 1rem; }
+  .filters-section { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1.25rem; }
+  .filter-group { width: 100%; }
+  .filter-group select { width: 100%; }
+  .stats-card { justify-content: space-between; width: 100%; }
+  .buste-paga-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+  .busta-header { padding: 1rem; }
+  .busta-title { font-size: 1rem; }
+  .busta-details { padding: 1rem; }
+  .detail-label { font-size: 0.75rem; }
+  .detail-value { font-size: 0.9rem; }
+  .busta-amount { font-size: 1.1rem; }
+  .busta-footer { padding: 1rem; gap: 0.5rem; }
+  .view-btn, .download-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }
+}
 
-  .filters-section {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .buste-paga-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-card {
-    justify-content: space-between;
-  }
+@media (max-width: 480px) {
+  .quick-actions { flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.75rem 0 0.75rem; }
+  .action-card { padding: 1rem; max-width: 100%; }
+  .action-card .icon { font-size: 1.3rem; }
+  .action-card span { font-size: 0.85rem; }
+  .buste-paga-content { padding: 0.75rem; }
+  .filters-section { padding: 1rem; }
+  .stats-card { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+  .stat-item { justify-content: space-between; }
+  .busta-footer { flex-direction: column; }
+  .view-btn, .download-btn { width: 100%; }
 }
 </style>
+

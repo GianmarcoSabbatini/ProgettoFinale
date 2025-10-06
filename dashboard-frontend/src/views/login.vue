@@ -259,4 +259,4 @@ h1 {
     opacity: 0;
   }
 }
-</style>
+@media (max-width: 768px) {  .login-container { padding: 1rem; }  .login-box { padding: 2rem 1.5rem; max-width: 100%; }  .login-title { font-size: 1.8rem; }  .login-subtitle { font-size: 0.9rem; }  .input-group label { font-size: 0.85rem; }  .input-group input { padding: 0.85rem 1rem; font-size: 0.95rem; }  .login-btn { padding: 0.85rem; font-size: 0.95rem; }}@media (max-width: 480px) {  .login-box { padding: 1.5rem 1rem; }  .login-title { font-size: 1.5rem; }  .login-subtitle { font-size: 0.85rem; }  .snackbar { width: calc(100% - 2rem); left: 1rem; right: 1rem; }}</style>

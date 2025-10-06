@@ -59,22 +59,14 @@
           <i class="fas fa-file-invoice-dollar icon"></i>
           <span>Buste Paga</span>
         </router-link>
-        <button class="action-card">
-          <i class="fas fa-users icon"></i>
-          <span>HR Policies</span>
-        </button>
-        <button class="action-card">
-          <i class="fas fa-calendar-alt icon"></i>
-          <span>Eventi aziendali</span>
-        </button>
-        <button class="action-card">
+        <router-link to="/timesheet" class="action-card">
           <i class="fas fa-clock icon"></i>
           <span>Timesheet</span>
-        </button>
-        <button class="action-card">
+        </router-link>
+        <router-link to="/rimborso-spese" class="action-card">
           <i class="fas fa-wallet icon"></i>
           <span>Rimborso spese</span>
-        </button>
+        </router-link>
       </section>
 
       <div class="main-panel">
@@ -451,18 +443,38 @@ const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
-  const diffTime = Math.abs(now - date);
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
-  if (diffDays === 0) {
-    return 'Oggi';
-  } else if (diffDays === 1) {
-    return 'Ieri';
-  } else if (diffDays < 7) {
-    return `${diffDays} giorni fa`;
-  } else {
-    return date.toLocaleDateString('it-IT');
+  // Formatta l'ora HH:MM
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  
+  // Verifica se è oggi (stesso giorno, mese e anno)
+  const isToday = date.getDate() === now.getDate() &&
+                  date.getMonth() === now.getMonth() &&
+                  date.getFullYear() === now.getFullYear();
+  
+  if (isToday) {
+    return `Oggi alle ${hours}:${minutes}`;
   }
+  
+  // Verifica se è ieri
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const isYesterday = date.getDate() === yesterday.getDate() &&
+                      date.getMonth() === yesterday.getMonth() &&
+                      date.getFullYear() === yesterday.getFullYear();
+  
+  if (isYesterday) {
+    return `Ieri alle ${hours}:${minutes}`;
+  }
+  
+  // Altrimenti mostra la data completa
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `Il ${day}/${month}/${year} alle ${hours}:${minutes}`;
 };
 
 // Funzione per ottenere le iniziali
@@ -833,9 +845,16 @@ onMounted(async () => {
   padding: 0; 
 }
 .dashboard-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-.quick-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.quick-actions { 
+  display: flex; 
+  justify-content: center; 
+  gap: 1rem; 
+  margin-bottom: 2rem; 
+}
 .action-card {
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 180px;
+  max-width: 220px;
   background-color: #e8e1f9;
   border: 2px solid #e8e1f9;
   border-radius: 16px;
@@ -1556,8 +1575,25 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   }
 }
 
-@media (max-width: 900px) {
-  .main-panel { grid-template-columns: 1fr; }
-  .quick-actions { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+@media (max-width: 1024px) {
+  .main-header { padding: 0.75rem 1.5rem; }
+  .logo { font-size: 1.3rem; }
+  .main-nav { gap: 1rem; }
+  .nav-link { font-size: 0.9rem; }
+  .dashboard-content { padding: 1.5rem; }
+  .quick-actions { flex-wrap: wrap; gap: 0.75rem; }
+  .action-card { padding: 1.25rem 0.75rem; min-width: 150px; }
+  .action-card .icon { font-size: 1.3rem; }
+  .action-card span { font-size: 0.85rem; }
 }
+
+@media (max-width: 768px) {
+  .main-header { padding: 0.75rem 1rem; }
+  .logo { font-size: 1.2rem; }
+  .main-nav { display: none; }
+  .header-actions { gap: 1rem; font-size: 1.1rem; }
+  .dashboard-content { padding: 1rem; }
+  .quick-actions { flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .action-card { padding: 1rem 0.5rem; max-width: 100%; }  .action-card .icon { font-size: 1.2rem; margin-bottom: 0.4rem; }  .action-card span { font-size: 0.8rem; }  .main-panel { grid-template-columns: 1fr; gap: 1.5rem; }  .message-board, .user-profile { padding: 1.25rem; }  h2 { font-size: 1.1rem; margin-bottom: 1rem; }  .message-composer textarea { font-size: 0.9rem; padding: 0.75rem; }  .send-message-btn { padding: 0.7rem 1.25rem; font-size: 0.85rem; }  .message-item { padding: 1rem; }  .message-author { gap: 0.75rem; }  .avatar { width: 36px; height: 36px; font-size: 0.85rem; }  .message-author strong { font-size: 0.9rem; }  .message-author small { font-size: 0.75rem; }  .message-content { font-size: 0.9rem; line-height: 1.5; }  .message-actions { gap: 0.5rem; }  .action-btn { width: 32px; height: 32px; font-size: 0.85rem; }  .edit-textarea { font-size: 0.9rem; padding: 0.75rem; }  .edit-actions { gap: 0.5rem; }  .cancel-edit-btn, .save-edit-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }  .profile-header h2 { font-size: 1rem; }  .edit-profile-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }  .profile-avatar { width: 70px; height: 70px; font-size: 1.8rem; }  .profile-name { font-size: 1.1rem; }  .profile-role { font-size: 0.85rem; }  .info-item label { font-size: 0.8rem; }  .info-item p { font-size: 0.9rem; }  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }  .notifications-header { padding: 0.85rem 1rem; }  .notifications-header h3 { font-size: 1rem; }  .notification-item { padding: 0.85rem 1rem; }  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }  .notification-sender { font-size: 0.85rem; }  .notification-message { font-size: 0.8rem; }  .notification-time { font-size: 0.7rem; }  .delete-modal-content, .logout-modal-content { padding: 1.5rem; max-width: 90%; }  .delete-modal-icon, .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }  .delete-modal-title, .logout-modal-title { font-size: 1.3rem; }  .delete-modal-text, .logout-modal-text { font-size: 0.9rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }}@media (max-width: 480px) {  .main-header { padding: 0.75rem; }  .logo { font-size: 1.1rem; }  .header-actions { gap: 0.75rem; font-size: 1rem; }  .dashboard-content { padding: 0.75rem; }  .quick-actions { grid-template-columns: 1fr; gap: 0.5rem; }  .action-card { padding: 1rem; }  .action-card .icon { font-size: 1.3rem; }  .action-card span { font-size: 0.85rem; }  .message-board, .user-profile { padding: 1rem; }  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }  .message-actions { flex-direction: column; gap: 0.4rem; }  .action-btn { width: 100%; height: 36px; }  .edit-actions { flex-direction: column; }  .cancel-edit-btn, .save-edit-btn { width: 100%; }  .delete-modal-actions, .logout-modal-actions { flex-direction: column; gap: 0.5rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }}
 </style>
+

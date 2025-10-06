@@ -458,4 +458,4 @@ h1 {
     opacity: 0;
   }
 }
-</style>
+@media (max-width: 768px) {  .register-container { padding: 1rem; }  .register-box { padding: 2rem 1.5rem; max-width: 100%; }  .register-title { font-size: 1.8rem; }  .register-subtitle { font-size: 0.9rem; }  .input-group label { font-size: 0.85rem; }  .input-group input { padding: 0.85rem 1rem; font-size: 0.95rem; }  .register-btn { padding: 0.85rem; font-size: 0.95rem; }}@media (max-width: 480px) {  .register-box { padding: 1.5rem 1rem; }  .register-title { font-size: 1.5rem; }  .register-subtitle { font-size: 0.85rem; }}</style>
