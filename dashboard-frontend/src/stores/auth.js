@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from './notification';
+import { useHeaderNotificationStore } from './headerNotification';
 import API_URL from '@/config/api';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -24,10 +25,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function login(email, password) {
+        const headerNotificationStore = useHeaderNotificationStore();
+        
         try {
             const response = await axios.post(`${API_URL}/api/login`, { email, password });
             if (response.data.success) {
                 setToken(response.data.token);
+                
+                // Aggiungi notifica di benvenuto
+                setTimeout(() => {
+                    headerNotificationStore.addNotification(
+                        'SISTEMA', 
+                        'Benvenuto nella dashboard aziendale!', 
+                        'info'
+                    );
+                }, 200);
+                
                 // Usa il router per reindirizzare alla dashboard
                 router.push({ name: 'Dashboard' }); 
             }
@@ -43,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function register(username, email, password, nome, cognome, jobTitle, team, avatar) {
         const notificationStore = useNotificationStore();
+        const headerNotificationStore = useHeaderNotificationStore();
         
         try {
             const registrationData = { 
@@ -66,7 +80,17 @@ export const useAuthStore = defineStore('auth', () => {
                 // Mostra la notifica dopo un piccolo delay per dare tempo al componente di montarsi
                 setTimeout(() => {
                     notificationStore.showNotification('Registrazione completata con successo! Benvenuto nella dashboard.', 'success');
-                }, 100);
+                    headerNotificationStore.addNotification(
+                        'SISTEMA', 
+                        'Benvenuto nella dashboard aziendale!', 
+                        'success'
+                    );
+                    headerNotificationStore.addNotification(
+                        'HR', 
+                        'Ricordati di completare il tuo profilo con Job Title e Team', 
+                        'warning'
+                    );
+                }, 200);
             }
         } catch (error) {
             // Rimosso console.error per produzione

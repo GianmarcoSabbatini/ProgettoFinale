@@ -3,20 +3,7 @@
     <MainHeader />
     
     <!-- Quick Actions (same as dashboard) -->
-    <section class="quick-actions">
-      <router-link to="/buste-paga" class="action-card">
-        <i class="fas fa-file-invoice-dollar icon"></i>
-        <span>Buste Paga</span>
-      </router-link>
-      <router-link to="/timesheet" class="action-card active">
-        <i class="fas fa-clock icon"></i>
-        <span>Timesheet</span>
-      </router-link>
-      <router-link to="/rimborso-spese" class="action-card">
-        <i class="fas fa-wallet icon"></i>
-        <span>Rimborso spese</span>
-      </router-link>
-    </section>
+    <QuickActions activePage="timesheet" />
 
     <!-- Main Content -->
     <main class="timesheet-content">
@@ -195,7 +182,7 @@
                   </div>
                 </div>
                 <p class="activity-description">{{ entry.description }}</p>
-                <button @click="deleteEntry(entry.id)" class="delete-activity-btn">
+                <button @click="openDeleteModal(entry.id)" class="delete-activity-btn">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
@@ -205,17 +192,49 @@
       </div>
     </main>
   </div>
+
+  <!-- Snackbar per notifiche -->
+  <transition name="snackbar">
+    <div v-if="notificationStore.notification.show" :class="['snackbar', notificationStore.notification.type]">
+      <i :class="notificationStore.notification.type === 'success' ? 'fas fa-check-circle' : notificationStore.notification.type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-exclamation-circle'"></i>
+      <span>{{ notificationStore.notification.message }}</span>
+    </div>
+  </transition>
+
+  <!-- Modale Conferma Eliminazione -->
+  <transition name="modal">
+    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
+      <div class="delete-modal-content" @click.stop>
+        <div class="delete-modal-icon">
+          <i class="fas fa-trash-alt"></i>
+        </div>
+        <h3 class="delete-modal-title">Conferma Eliminazione</h3>
+        <p class="delete-modal-text">Sei sicuro di voler eliminare questa registrazione? Questa azione non può essere annullata.</p>
+        <div class="delete-modal-actions">
+          <button @click="cancelDelete" class="cancel-delete-btn">
+            <i class="fas fa-times"></i> Annulla
+          </button>
+          <button @click="confirmDelete" class="confirm-delete-btn">
+            <i class="fas fa-trash-alt"></i> Elimina
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useNotificationStore } from '../stores/notification';
+import { useHeaderNotificationStore } from '../stores/headerNotification';
 import { useAuthStore } from '../stores/auth';
 import axios from 'axios';
 import API_URL from '../config/api';
 import MainHeader from '../components/MainHeader.vue';
+import QuickActions from '../components/QuickActions.vue';
 
 const notificationStore = useNotificationStore();
+const headerNotificationStore = useHeaderNotificationStore();
 const authStore = useAuthStore();
 
 // Form data
@@ -231,6 +250,28 @@ const newEntry = ref({
 // Timesheet entries
 const timesheetEntries = ref([]);
 const loading = ref(false);
+
+// Delete modal
+const showDeleteModal = ref(false);
+const entryToDelete = ref(null);
+
+const openDeleteModal = (id) => {
+  entryToDelete.value = id;
+  showDeleteModal.value = true;
+};
+
+const cancelDelete = () => {
+  showDeleteModal.value = false;
+  entryToDelete.value = null;
+};
+
+const confirmDelete = async () => {
+  if (entryToDelete.value) {
+    await deleteEntry(entryToDelete.value);
+    showDeleteModal.value = false;
+    entryToDelete.value = null;
+  }
+};
 
 // Load timesheet entries from backend
 const loadTimesheetEntries = async () => {
@@ -302,7 +343,13 @@ const addTimesheetEntry = async () => {
         description: ''
       };
 
+      // Mostra notifiche
       notificationStore.showNotification('Registrazione ore salvata con successo!', 'success');
+      headerNotificationStore.addNotification(
+        'Sistema',
+        `Nuova registrazione: ${newEntryData.hours}h per ${newEntryData.project}`,
+        'success'
+      );
     }
   } catch (error) {
     console.error('Errore salvataggio timesheet:', error);
@@ -315,10 +362,6 @@ const addTimesheetEntry = async () => {
 
 // Delete entry
 const deleteEntry = async (id) => {
-  if (!confirm('Sei sicuro di voler eliminare questa registrazione?')) {
-    return;
-  }
-
   try {
     loading.value = true;
     const response = await axios.delete(`${API_URL}/api/timesheet/${id}`, {
@@ -330,6 +373,13 @@ const deleteEntry = async (id) => {
     if (response.data.success) {
       timesheetEntries.value = timesheetEntries.value.filter(entry => entry.id !== id);
       notificationStore.showNotification('Registrazione eliminata', 'success');
+      
+      // Aggiungi notifica nella campanella
+      headerNotificationStore.addNotification(
+        'Sistema',
+        'Hai eliminato una registrazione ore dal timesheet',
+        'info'
+      );
     }
   } catch (error) {
     console.error('Errore eliminazione timesheet:', error);
@@ -433,64 +483,6 @@ const filterByWeek = () => {
 }
 
 /* Quick Actions (identiche alla dashboard) */
-.quick-actions { 
-  display: flex;
-  justify-content: center;
-  gap: 1rem; 
-  margin-bottom: 2rem;
-  padding: 2rem 2rem 0 2rem;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.action-card {
-  flex: 0 1 auto;
-  min-width: 180px;
-  max-width: 220px;
-  background-color: #e8e1f9;
-  border: 2px solid #e8e1f9;
-  border-radius: 16px;
-  padding: 1.5rem 1rem;
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  text-decoration: none;
-  display: block;
-}
-
-.action-card:hover { 
-  border: 2px solid #4b00e9; 
-  transition: ease-in 0.2s; 
-}
-
-.action-card.active {
-  background-color: #4b00e9;
-  border-color: #4b00e9;
-}
-
-.action-card .icon { 
-  display: block; 
-  font-size: 1.5rem; 
-  margin-bottom: 0.5rem; 
-  color: #4b00e9; 
-}
-
-.action-card.active .icon {
-  color: white;
-}
-
-.action-card span { 
-  font-family: 'DM Sans', sans-serif; 
-  color: #4b00e9; 
-}
-
-.action-card.active span {
-  color: white;
-}
-
 /* Main Content */
 .timesheet-content {
   max-width: 1400px;
@@ -949,34 +941,12 @@ const filterByWeek = () => {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .quick-actions { 
-    flex-wrap: wrap; 
-    gap: 0.75rem; 
-    padding: 1.5rem 1.5rem 0 1.5rem; 
-  }
-  .action-card { 
-    padding: 1.25rem 0.75rem; 
-    min-width: 150px;
-  }
-  .action-card .icon { font-size: 1.3rem; }
-  .action-card span { font-size: 0.85rem; }
   .timesheet-content { padding: 1.5rem; grid-template-columns: 1fr; }
   .timesheet-form-section { position: static; }
   .summary-cards { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .quick-actions { 
-    flex-direction: column;
-    gap: 0.75rem; 
-    padding: 1rem 1rem 0 1rem; 
-  }
-  .action-card { 
-    padding: 1rem 0.5rem; 
-    max-width: 100%;
-  }
-  .action-card .icon { font-size: 1.2rem; margin-bottom: 0.4rem; }
-  .action-card span { font-size: 0.8rem; }
   .timesheet-content { padding: 1rem; }
   .timesheet-form-section { padding: 1.5rem; }
   .timesheet-entries-section { padding: 1.5rem; }
@@ -986,20 +956,209 @@ const filterByWeek = () => {
 }
 
 @media (max-width: 480px) {
-  .quick-actions { 
-    flex-direction: column;
-    gap: 0.5rem; 
-    padding: 0.75rem 0.75rem 0 0.75rem; 
-  }
-  .action-card { 
-    padding: 1rem; 
-    max-width: 100%;
-  }
-  .action-card .icon { font-size: 1.3rem; }
-  .action-card span { font-size: 0.85rem; }
   .timesheet-content { padding: 0.75rem; }
   .timesheet-form-section { padding: 1rem; }
   .timesheet-entries-section { padding: 1rem; }
   .entry-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}
+
+/* Snackbar Styles */
+.snackbar {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+
+.snackbar.success {
+  background-color: #10b981;
+  color: white;
+}
+
+.snackbar.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.snackbar.warning {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.snackbar i {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.snackbar span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Animazioni Snackbar */
+.snackbar-enter-active {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.snackbar-leave-active {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+/* Delete Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.delete-modal-content {
+  background-color: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.delete-modal-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem auto;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #ef4444;
+}
+
+.delete-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.delete-modal-text {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.cancel-delete-btn,
+.confirm-delete-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancel-delete-btn {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.cancel-delete-btn:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.confirm-delete-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.confirm-delete-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.confirm-delete-btn:active {
+  transform: translateY(0);
+}
+
+/* Modal animations */
+.modal-enter-active {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+.modal-leave-active {
+  animation: modalFadeOut 0.3s ease-in;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 </style>

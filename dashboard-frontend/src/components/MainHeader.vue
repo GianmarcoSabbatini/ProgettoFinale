@@ -2,30 +2,27 @@
   <header class="main-header">
     <div class="logo">Azienda</div>
     <nav class="main-nav">
-      <router-link to="/dashboard" class="nav-link" active-class="active">Home</router-link>
-      <a href="#" class="nav-link">Documenti</a>
-      <a href="#" class="nav-link">Assistenza</a>
-      <a href="#" class="nav-link">Impostazioni</a>
+      <!-- Dashboard action è nelle quick actions di ogni pagina -->
     </nav>
     <div class="header-actions">
       <div class="notification-container">
-        <i @click="toggleNotifications" class="fas fa-bell action-icon" :class="{ 'has-notifications': notifications.length > 0 }"></i>
-        <span v-if="notifications.length > 0" class="notification-badge">{{ notifications.length }}</span>
+        <i @click="toggleNotifications" class="fas fa-bell action-icon" :class="{ 'has-notifications': headerNotificationStore.notifications.length > 0 }"></i>
+        <span v-if="headerNotificationStore.notifications.length > 0" class="notification-badge">{{ headerNotificationStore.notifications.length }}</span>
         
         <!-- Dropdown Notifiche -->
         <transition name="dropdown">
           <div v-if="showNotifications" class="notifications-dropdown">
             <div class="notifications-header">
               <h3>Notifiche</h3>
-              <button @click="clearAllNotifications" class="clear-all-btn">Cancella tutto</button>
+              <button @click="headerNotificationStore.clearAllNotifications()" class="clear-all-btn">Cancella tutto</button>
             </div>
             <div class="notifications-list">
-              <div v-if="notifications.length === 0" class="no-notifications">
+              <div v-if="headerNotificationStore.notifications.length === 0" class="no-notifications">
                 <i class="fas fa-inbox"></i>
                 <p>Nessuna notifica</p>
               </div>
               <div 
-                v-for="notification in notifications" 
+                v-for="notification in headerNotificationStore.notifications" 
                 :key="notification.id" 
                 class="notification-item"
                 :class="'notification-' + notification.type"
@@ -38,7 +35,7 @@
                   <div class="notification-message">{{ notification.message }}</div>
                   <div class="notification-time">{{ notification.time }}</div>
                 </div>
-                <button @click="removeNotification(notification.id)" class="remove-notification">
+                <button @click="headerNotificationStore.removeNotification(notification.id)" class="remove-notification">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
@@ -77,37 +74,16 @@
 <script setup>
 import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useHeaderNotificationStore } from '@/stores/headerNotification';
 
 const authStore = useAuthStore();
+const headerNotificationStore = useHeaderNotificationStore();
 
 // Sistema Notifiche
 const showNotifications = ref(false);
-const notifications = ref([]);
-let notificationIdCounter = 1;
 
 const toggleNotifications = () => {
   showNotifications.value = !showNotifications.value;
-};
-
-const addNotification = (sender, message, type = 'info') => {
-  const now = new Date();
-  const timeString = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-  
-  notifications.value.unshift({
-    id: notificationIdCounter++,
-    sender: sender,
-    message: message,
-    time: timeString,
-    type: type
-  });
-};
-
-const removeNotification = (id) => {
-  notifications.value = notifications.value.filter(n => n.id !== id);
-};
-
-const clearAllNotifications = () => {
-  notifications.value = [];
 };
 
 const getNotificationIcon = (type) => {
@@ -146,8 +122,7 @@ const confirmLogout = () => {
 }
 .logo { font-size: 1.5rem; font-weight: bold; }
 .main-nav { margin: 0 auto; display: flex; gap: 1.5rem; }
-.nav-link { text-decoration: none; color: #777; font-weight: 500; }
-.nav-link.active { color: #333; }
+
 .header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: #777; }
 
 /* Sistema Notifiche */
@@ -478,5 +453,39 @@ const confirmLogout = () => {
 .modal-leave-to {
   opacity: 0;
 }
-@media (max-width: 1024px) {  .main-header { padding: 0.75rem 1.5rem; }  .logo { font-size: 1.3rem; }  .main-nav { gap: 1rem; }  .nav-link { font-size: 0.9rem; }}@media (max-width: 768px) {  .main-header { padding: 0.75rem 1rem; }  .logo { font-size: 1.2rem; }  .main-nav { display: none; }  .header-actions { gap: 1rem; font-size: 1.1rem; }  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }  .notifications-header { padding: 0.85rem 1rem; }  .notifications-header h3 { font-size: 1rem; }  .notification-item { padding: 0.85rem 1rem; }  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }  .notification-sender { font-size: 0.85rem; }  .notification-message { font-size: 0.8rem; }  .notification-time { font-size: 0.7rem; }  .logout-modal-content { padding: 1.5rem; max-width: 90%; }  .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }  .logout-modal-title { font-size: 1.3rem; }  .logout-modal-text { font-size: 0.9rem; }  .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }}@media (max-width: 480px) {  .main-header { padding: 0.75rem; }  .logo { font-size: 1.1rem; }  .header-actions { gap: 0.75rem; font-size: 1rem; }  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }  .logout-modal-actions { flex-direction: column; gap: 0.5rem; }  .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }}</style>
+
+@media (max-width: 1024px) {
+  .main-header { padding: 0.75rem 1.5rem; }
+  .logo { font-size: 1.3rem; }
+}
+
+@media (max-width: 768px) {
+  .main-header { padding: 0.75rem 1rem; }
+  .logo { font-size: 1.2rem; }
+  .main-nav { display: flex; }
+  .header-actions { gap: 1rem; font-size: 1.1rem; }
+  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }
+  .notifications-header { padding: 0.85rem 1rem; }
+  .notifications-header h3 { font-size: 1rem; }
+  .notification-item { padding: 0.85rem 1rem; }
+  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }
+  .notification-sender { font-size: 0.85rem; }
+  .notification-message { font-size: 0.8rem; }
+  .notification-time { font-size: 0.7rem; }
+  .logout-modal-content { padding: 1.5rem; max-width: 90%; }
+  .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }
+  .logout-modal-title { font-size: 1.3rem; }
+  .logout-modal-text { font-size: 0.9rem; }
+  .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }
+}
+
+@media (max-width: 480px) {
+  .main-header { padding: 0.75rem; }
+  .logo { font-size: 1.1rem; }
+  .header-actions { gap: 0.75rem; font-size: 1rem; }
+  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }
+  .logout-modal-actions { flex-direction: column; gap: 0.5rem; }
+  .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }
+}
+</style>
 
