@@ -16,15 +16,61 @@
         <div v-if="currentStep === 1" class="step-content">
           <div class="form-group">
             <label for="email">Indirizzo email</label>
-            <input type="email" id="email" v-model="form.email" required>
+            <input 
+              type="email" 
+              id="email" 
+              v-model="form.email" 
+              @blur="validateEmail"
+              :class="{ 'error': emailError }"
+              required
+            >
+            <span v-if="emailError" class="error-message">{{ emailError }}</span>
           </div>
+          
           <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" v-model="form.password" required>
+            <input 
+              type="password" 
+              id="password" 
+              v-model="form.password" 
+              @input="validatePassword"
+              :class="{ 'error': passwordError }"
+              required
+            >
+            <span v-if="passwordError" class="error-message">{{ passwordError }}</span>
+            
+            <!-- Indicatori requisiti password -->
+            <div class="password-requirements" v-if="form.password">
+              <div class="requirement" :class="{ 'met': passwordChecks.length }">
+                <i :class="passwordChecks.length ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                Almeno 8 caratteri
+              </div>
+              <div class="requirement" :class="{ 'met': passwordChecks.uppercase }">
+                <i :class="passwordChecks.uppercase ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                Una lettera maiuscola (A-Z)
+              </div>
+              <div class="requirement" :class="{ 'met': passwordChecks.lowercase }">
+                <i :class="passwordChecks.lowercase ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                Una lettera minuscola (a-z)
+              </div>
+              <div class="requirement" :class="{ 'met': passwordChecks.number }">
+                <i :class="passwordChecks.number ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                Un numero (0-9)
+              </div>
+            </div>
           </div>
+          
           <div class="form-group">
             <label for="confirmPassword">Conferma password</label>
-            <input type="password" id="confirmPassword" v-model="form.confirmPassword" required>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              v-model="form.confirmPassword" 
+              @input="validateConfirmPassword"
+              :class="{ 'error': confirmPasswordError }"
+              required
+            >
+            <span v-if="confirmPasswordError" class="error-message">{{ confirmPasswordError }}</span>
           </div>
         </div>
 
@@ -84,6 +130,11 @@ import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
 const currentStep = ref(1);
 
+// Errori di validazione
+const emailError = ref('');
+const passwordError = ref('');
+const confirmPasswordError = ref('');
+
 // Snackbar state
 const snackbar = reactive({
   show: false,
@@ -125,20 +176,82 @@ const form = reactive({
   avatarColor: getRandomColor() // Colore generato automaticamente
 });
 
+// Computed per verificare i requisiti password
+const passwordChecks = computed(() => ({
+  length: form.password.length >= 8,
+  uppercase: /[A-Z]/.test(form.password),
+  lowercase: /[a-z]/.test(form.password),
+  number: /[0-9]/.test(form.password)
+}));
+
+// Computed per verificare se la password è valida
+const isPasswordValid = computed(() => {
+  return passwordChecks.value.length && 
+         passwordChecks.value.uppercase && 
+         passwordChecks.value.lowercase && 
+         passwordChecks.value.number;
+});
+
+// Funzioni di validazione
+const validateEmail = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!form.email) {
+    emailError.value = 'Email obbligatoria';
+  } else if (!emailRegex.test(form.email)) {
+    emailError.value = 'Formato email non valido';
+  } else {
+    emailError.value = '';
+  }
+};
+
+const validatePassword = () => {
+  if (!form.password) {
+    passwordError.value = 'Password obbligatoria';
+  } else if (!isPasswordValid.value) {
+    passwordError.value = 'La password non soddisfa tutti i requisiti';
+  } else {
+    passwordError.value = '';
+  }
+  
+  // Rivalidare anche la conferma password se presente
+  if (form.confirmPassword) {
+    validateConfirmPassword();
+  }
+};
+
+const validateConfirmPassword = () => {
+  if (!form.confirmPassword) {
+    confirmPasswordError.value = 'Conferma password obbligatoria';
+  } else if (form.password !== form.confirmPassword) {
+    confirmPasswordError.value = 'Le password non coincidono';
+  } else {
+    confirmPasswordError.value = '';
+  }
+};
+
 const nextStep = () => {
-  // Validazione step 1
+  // Validazione completa step 1
+  validateEmail();
+  validatePassword();
+  validateConfirmPassword();
+  
+  if (emailError.value || passwordError.value || confirmPasswordError.value) {
+    showSnackbar('Per favore, correggi gli errori nel form.', 'error');
+    return;
+  }
+  
   if (!form.email || !form.password || !form.confirmPassword) {
     showSnackbar('Per favore, compila tutti i campi.', 'error');
     return;
   }
   
-  if (form.password !== form.confirmPassword) {
-    showSnackbar('Le password non coincidono.', 'error');
+  if (!isPasswordValid.value) {
+    showSnackbar('La password non soddisfa tutti i requisiti di sicurezza.', 'error');
     return;
   }
   
-  if (form.password.length < 6) {
-    showSnackbar('La password deve essere di almeno 6 caratteri.', 'error');
+  if (form.password !== form.confirmPassword) {
+    showSnackbar('Le password non coincidono.', 'error');
     return;
   }
   
@@ -315,6 +428,12 @@ h1 {
     background-color: white;
 }
 
+.form-group input.error,
+.form-group select.error {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
@@ -322,23 +441,81 @@ h1 {
     box-shadow: 0 0 0 3px rgba(75, 0, 130, 0.1);
 }
 
+.form-group input.error:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.error-message {
+    display: block;
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* Password Requirements */
+.password-requirements {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #6c757d;
+}
+
+.requirement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6c757d;
+    margin: 6px 0;
+    transition: color 0.3s;
+}
+
+.requirement.met {
+    color: #28a745;
+}
+
+.requirement i {
+    font-size: 14px;
+}
+
+.requirement .fa-check-circle {
+    color: #28a745;
+}
+
+.requirement .fa-times-circle {
+    color: #dc3545;
+}
+
 .submit-btn {
     width: 100%;
     padding: 16px;
-    background-color: #4B0082;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
     border: none;
     border-radius: 10px;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
     margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .submit-btn:hover {
-    background-color: #6a0dad;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
 }
 
 .button-group {

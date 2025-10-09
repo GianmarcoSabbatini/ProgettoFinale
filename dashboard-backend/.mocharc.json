@@ -1,0 +1,6 @@
+{
+  "timeout": 10000,
+  "exit": true,
+  "require": ["test/setup.js"],
+  "spec": "test/**/*.test.js"
+}

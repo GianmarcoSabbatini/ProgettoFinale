@@ -159,18 +159,29 @@ h1 {
 .submit-btn {
     width: 100%;
     padding: 16px;
-    background-color: #4B0082;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
     border: none;
     border-radius: 10px;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
+
 .submit-btn:hover {
-    background-color: #6a0dad;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
 }
 .register-link {
     text-align: center;

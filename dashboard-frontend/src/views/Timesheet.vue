@@ -58,7 +58,7 @@
                 id="hours" 
                 v-model.number="newEntry.hours" 
                 min="0.5" 
-                max="8" 
+                max="24" 
                 step="0.5" 
                 required
                 placeholder="Es. 8"
@@ -160,12 +160,18 @@
               </div>
               <div class="day-total">
                 <i class="fas fa-clock"></i>
-                <strong>{{ dayGroup.totalHours }} / 8 ore</strong>
+                <strong>{{ dayGroup.regularHours }} / 8 ore</strong>
+                <span 
+                  v-if="dayGroup.overtimeHours > 0"
+                  class="overtime-badge"
+                >
+                  + {{ dayGroup.overtimeHours }} straordinario
+                </span>
                 <span 
                   class="hours-badge" 
-                  :class="dayGroup.totalHours === 8 ? 'complete' : 'incomplete'"
+                  :class="dayGroup.regularHours === 8 ? 'complete' : (dayGroup.regularHours > 0 ? 'incomplete' : 'empty')"
                 >
-                  {{ dayGroup.totalHours === 8 ? '✓ Completo' : '⚠ Incompleto' }}
+                  {{ dayGroup.regularHours === 8 ? '✓ Completo' : '⚠ Incompleto' }}
                 </span>
               </div>
             </div>
@@ -202,11 +208,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useNotificationStore } from '../stores/notification';
+import { useAuthStore } from '../stores/auth';
+import axios from 'axios';
+import API_URL from '../config/api';
 import MainHeader from '../components/MainHeader.vue';
 
 const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 
 // Form data
 const today = new Date().toISOString().split('T')[0];
@@ -219,129 +229,115 @@ const newEntry = ref({
 });
 
 // Timesheet entries
-const timesheetEntries = ref([
-  {
-    id: 1,
-    date: '2025-10-06',
-    project: 'Dashboard Aziendale',
-    hours: 5,
-    type: 'Sviluppo',
-    description: 'Implementazione sistema di notifiche e gestione messaggi bacheca'
-  },
-  {
-    id: 2,
-    date: '2025-10-06',
-    project: 'Dashboard Aziendale',
-    hours: 3,
-    type: 'Testing',
-    description: 'Test funzionali e correzione bug'
-  },
-  {
-    id: 3,
-    date: '2025-10-05',
-    project: 'Dashboard Aziendale',
-    hours: 6,
-    type: 'Design',
-    description: 'Redesign interfaccia utente e creazione componenti responsive'
-  },
-  {
-    id: 4,
-    date: '2025-10-05',
-    project: 'App Mobile',
-    hours: 2,
-    type: 'Meeting',
-    description: 'Meeting con il team per definire requisiti'
-  },
-  {
-    id: 5,
-    date: '2025-10-04',
-    project: 'Gestione Clienti',
-    hours: 7,
-    type: 'Sviluppo',
-    description: 'Sviluppo API REST per gestione profili utente'
-  },
-  {
-    id: 6,
-    date: '2025-10-04',
-    project: 'Gestione Clienti',
-    hours: 1,
-    type: 'Documentazione',
-    description: 'Documentazione API endpoints'
-  },
-  {
-    id: 7,
-    date: '2025-10-03',
-    project: 'E-commerce',
-    hours: 8,
-    type: 'Sviluppo',
-    description: 'Implementazione carrello e checkout'
-  },
-  {
-    id: 8,
-    date: '2025-10-02',
-    project: 'Sistema CRM',
-    hours: 5,
-    type: 'Sviluppo',
-    description: 'Sviluppo modulo gestione leads'
-  },
-  {
-    id: 9,
-    date: '2025-10-02',
-    project: 'Sistema CRM',
-    hours: 3,
-    type: 'Testing',
-    description: 'Test e debugging modulo leads'
+const timesheetEntries = ref([]);
+const loading = ref(false);
+
+// Load timesheet entries from backend
+const loadTimesheetEntries = async () => {
+  try {
+    loading.value = true;
+    const response = await axios.get(`${API_URL}/api/timesheet`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+    
+    if (response.data.success) {
+      // Convert hours to number to avoid string concatenation
+      timesheetEntries.value = response.data.entries.map(entry => ({
+        ...entry,
+        hours: parseFloat(entry.hours)
+      }));
+    }
+  } catch (error) {
+    console.error('Errore caricamento timesheet:', error);
+    notificationStore.showNotification('Errore nel caricamento del timesheet', 'error');
+  } finally {
+    loading.value = false;
   }
-]);
+};
+
+// Load entries on component mount
+onMounted(() => {
+  loadTimesheetEntries();
+});
 
 const selectedWeek = ref('current');
 
 // Add new entry
-const addTimesheetEntry = () => {
+const addTimesheetEntry = async () => {
   if (!newEntry.value.date || !newEntry.value.project || !newEntry.value.hours || !newEntry.value.type || !newEntry.value.description) {
     notificationStore.showNotification('Compila tutti i campi obbligatori', 'warning');
     return;
   }
 
-  // Verifica che le ore totali del giorno non superino 8
-  const entriesForDay = timesheetEntries.value.filter(e => e.date === newEntry.value.date);
-  const totalHoursForDay = entriesForDay.reduce((sum, e) => sum + e.hours, 0);
-  
-  if (totalHoursForDay + newEntry.value.hours > 8) {
-    notificationStore.showNotification(
-      `Impossibile aggiungere ${newEntry.value.hours} ore. Il giorno ${newEntry.value.date} ha già ${totalHoursForDay} ore registrate (massimo 8 ore al giorno)`, 
-      'warning'
-    );
-    return;
+  try {
+    loading.value = true;
+    const response = await axios.post(`${API_URL}/api/timesheet`, {
+      date: newEntry.value.date,
+      project: newEntry.value.project,
+      hours: parseFloat(newEntry.value.hours),
+      type: newEntry.value.type,
+      description: newEntry.value.description
+    }, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+
+    if (response.data.success) {
+      // Add to local list with hours as number
+      const newEntryData = {
+        ...response.data.entry,
+        hours: parseFloat(response.data.entry.hours)
+      };
+      timesheetEntries.value.unshift(newEntryData);
+      
+      // Reset form
+      newEntry.value = {
+        date: today,
+        project: '',
+        hours: null,
+        type: '',
+        description: ''
+      };
+
+      notificationStore.showNotification('Registrazione ore salvata con successo!', 'success');
+    }
+  } catch (error) {
+    console.error('Errore salvataggio timesheet:', error);
+    const message = error.response?.data?.message || 'Errore durante il salvataggio';
+    notificationStore.showNotification(message, 'error');
+  } finally {
+    loading.value = false;
   }
-
-  const entry = {
-    id: Date.now(),
-    date: newEntry.value.date,
-    project: newEntry.value.project,
-    hours: newEntry.value.hours,
-    type: newEntry.value.type,
-    description: newEntry.value.description
-  };
-
-  timesheetEntries.value.unshift(entry);
-  
-  // Reset form
-  newEntry.value = {
-    date: today,
-    project: '',
-    hours: null,
-    type: '',
-    description: ''
-  };
-
-  notificationStore.showNotification('Registrazione ore salvata con successo!', 'success');
 };
 
 // Delete entry
-const deleteEntry = (id) => {
-  timesheetEntries.value = timesheetEntries.value.filter(entry => entry.id !== id);
-  notificationStore.showNotification('Registrazione eliminata', 'success');
+const deleteEntry = async (id) => {
+  if (!confirm('Sei sicuro di voler eliminare questa registrazione?')) {
+    return;
+  }
+
+  try {
+    loading.value = true;
+    const response = await axios.delete(`${API_URL}/api/timesheet/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+
+    if (response.data.success) {
+      timesheetEntries.value = timesheetEntries.value.filter(entry => entry.id !== id);
+      notificationStore.showNotification('Registrazione eliminata', 'success');
+    }
+  } catch (error) {
+    console.error('Errore eliminazione timesheet:', error);
+    const message = error.response?.data?.message || 'Errore durante l\'eliminazione';
+    notificationStore.showNotification(message, 'error');
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Filter entries
@@ -370,29 +366,41 @@ const filteredEntries = computed(() => {
 const groupedEntries = computed(() => {
   const groups = {};
   
-  // Group by date
+  // Group by date (normalize date format)
   filteredEntries.value.forEach(entry => {
-    if (!groups[entry.date]) {
-      groups[entry.date] = [];
+    // Normalize date to YYYY-MM-DD format to ensure grouping works
+    const dateKey = entry.date.split('T')[0]; // Remove time if present
+    
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
     }
-    groups[entry.date].push(entry);
+    groups[dateKey].push(entry);
   });
   
   // Convert to array and sort by date (most recent first)
   const groupedArray = Object.keys(groups)
     .sort((a, b) => new Date(b) - new Date(a))
-    .map(date => ({
-      date,
-      entries: groups[date],
-      totalHours: groups[date].reduce((sum, entry) => sum + entry.hours, 0)
-    }));
+    .map(date => {
+      const totalHours = groups[date].reduce((sum, entry) => sum + parseFloat(entry.hours || 0), 0);
+      const regularHours = Math.min(totalHours, 8);
+      const overtimeHours = Math.max(totalHours - 8, 0);
+      
+      return {
+        date,
+        entries: groups[date],
+        totalHours: parseFloat(totalHours.toFixed(2)),
+        regularHours: parseFloat(regularHours.toFixed(2)),
+        overtimeHours: parseFloat(overtimeHours.toFixed(2))
+      };
+    });
   
   return groupedArray;
 });
 
 // Computed statistics
 const totalHours = computed(() => {
-  return filteredEntries.value.reduce((sum, entry) => sum + entry.hours, 0);
+  const total = filteredEntries.value.reduce((sum, entry) => sum + parseFloat(entry.hours || 0), 0);
+  return parseFloat(total.toFixed(2));
 });
 
 const uniqueDays = computed(() => {
@@ -785,6 +793,28 @@ const filterByWeek = () => {
 .hours-badge.incomplete {
   background-color: #fff3e0;
   color: #e65100;
+}
+
+.overtime-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  margin-left: 0.5rem;
+  box-shadow: 0 2px 4px rgba(238, 90, 36, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(238, 90, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(238, 90, 36, 0.5);
+  }
 }
 
 /* Day Activities */

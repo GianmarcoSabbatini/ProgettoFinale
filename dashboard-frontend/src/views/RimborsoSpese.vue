@@ -236,11 +236,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useNotificationStore } from '../stores/notification';
+import { useAuthStore } from '../stores/auth';
+import axios from 'axios';
+import API_URL from '../config/api';
 import MainHeader from '../components/MainHeader.vue';
 
 const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 
 // Form data
 const today = new Date().toISOString().split('T')[0];
@@ -255,68 +259,44 @@ const newRimborso = ref({
 });
 
 // Rimborsi list
-const rimborsiList = ref([
-  {
-    id: 1,
-    date: '2025-10-05',
-    amount: 45.80,
-    category: 'Trasporto',
-    payment: 'Carta di Credito',
-    description: 'Taxi per trasferta cliente Milano',
-    receipt: 'ricevuta_taxi_05102025.pdf',
-    status: 'approved'
-  },
-  {
-    id: 2,
-    date: '2025-10-04',
-    amount: 125.00,
-    category: 'Vitto e Alloggio',
-    payment: 'Carta di Credito',
-    description: 'Pranzo di lavoro con team sviluppo',
-    receipt: 'fattura_ristorante_04102025.pdf',
-    status: 'approved'
-  },
-  {
-    id: 3,
-    date: '2025-10-03',
-    amount: 35.50,
-    category: 'Materiale Ufficio',
-    payment: 'Contanti',
-    description: 'Acquisto cartucce stampante e materiale di cancelleria',
-    receipt: 'scontrino_cancelleria_03102025.jpg',
-    status: 'pending'
-  },
-  {
-    id: 4,
-    date: '2025-10-01',
-    amount: 89.90,
-    category: 'Tecnologia',
-    payment: 'Carta di Credito',
-    description: 'Mouse wireless e tastiera ergonomica',
-    receipt: 'fattura_amazon_01102025.pdf',
-    status: 'pending'
-  },
-  {
-    id: 5,
-    date: '2025-09-28',
-    amount: 250.00,
-    category: 'Formazione',
-    payment: 'Bonifico',
-    description: 'Corso online Vue.js Advanced',
-    receipt: 'ricevuta_corso_28092025.pdf',
-    status: 'rejected'
-  },
-  {
-    id: 6,
-    date: '2025-09-25',
-    amount: 75.30,
-    category: 'Trasporto',
-    payment: 'Carta di Credito',
-    description: 'Carburante per trasferta sede Roma',
-    receipt: 'scontrino_benzina_25092025.jpg',
-    status: 'approved'
+const rimborsiList = ref([]);
+const loading = ref(false);
+
+// Load expense reimbursements from backend
+const loadExpenses = async () => {
+  try {
+    loading.value = true;
+    const response = await axios.get(`${API_URL}/api/expenses`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+    
+    if (response.data.success) {
+      // Map backend data to frontend format
+      rimborsiList.value = response.data.expenses.map(expense => ({
+        id: expense.id,
+        date: expense.date,
+        amount: parseFloat(expense.amount),
+        category: expense.category,
+        payment: expense.payment_method,
+        description: expense.description,
+        receipt: expense.receipt_filename,
+        status: expense.status
+      }));
+    }
+  } catch (error) {
+    console.error('Errore caricamento rimborsi:', error);
+    notificationStore.showNotification('Errore nel caricamento dei rimborsi', 'error');
+  } finally {
+    loading.value = false;
   }
-]);
+};
+
+// Load expenses on component mount
+onMounted(() => {
+  loadExpenses();
+});
 
 const selectedStatus = ref('all');
 
@@ -329,46 +309,100 @@ const handleFileUpload = (event) => {
   }
 };
 
+
 // Add rimborso
-const addRimborso = () => {
+const addRimborso = async () => {
   if (!newRimborso.value.date || !newRimborso.value.amount || !newRimborso.value.category || 
       !newRimborso.value.payment || !newRimborso.value.description) {
     notificationStore.showNotification('Compila tutti i campi obbligatori', 'warning');
     return;
   }
 
-  const rimborso = {
-    id: Date.now(),
-    date: newRimborso.value.date,
-    amount: newRimborso.value.amount,
-    category: newRimborso.value.category,
-    payment: newRimborso.value.payment,
-    description: newRimborso.value.description,
-    receipt: newRimborso.value.receipt,
-    status: 'pending'
-  };
+  try {
+    loading.value = true;
 
-  rimborsiList.value.unshift(rimborso);
-  
-  // Reset form
-  newRimborso.value = {
-    date: today,
-    amount: null,
-    category: '',
-    payment: '',
-    description: '',
-    receipt: null
-  };
-  fileName.value = '';
-  document.getElementById('receipt').value = '';
+    const expenseData = {
+      date: newRimborso.value.date,
+      amount: parseFloat(newRimborso.value.amount),
+      category: newRimborso.value.category,
+      payment_method: newRimborso.value.payment, // Backend expects payment_method
+      description: newRimborso.value.description,
+      receipt_filename: newRimborso.value.receipt || null
+    };
 
-  notificationStore.showNotification('Richiesta di rimborso inviata con successo!', 'success');
+    const response = await axios.post(`${API_URL}/api/expenses`, expenseData, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+
+    // Map backend response to frontend format
+    const expense = response.data.expense;
+    const rimborso = {
+      id: expense.id,
+      date: expense.date,
+      amount: parseFloat(expense.amount),
+      category: expense.category,
+      payment: expense.payment_method,
+      description: expense.description,
+      receipt: expense.receipt_filename,
+      status: expense.status || 'pending'
+    };
+
+    rimborsiList.value.unshift(rimborso);
+    
+    // Reset form
+    newRimborso.value = {
+      date: today,
+      amount: null,
+      category: '',
+      payment: '',
+      description: '',
+      receipt: null
+    };
+    fileName.value = '';
+    document.getElementById('receipt').value = '';
+
+    notificationStore.showNotification('Richiesta di rimborso inviata con successo!', 'success');
+
+  } catch (error) {
+    console.error('Error adding expense:', error);
+    notificationStore.showNotification(
+      error.response?.data?.error || 'Errore durante l\'invio della richiesta',
+      'error'
+    );
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Delete rimborso
-const deleteRimborso = (id) => {
-  rimborsiList.value = rimborsiList.value.filter(r => r.id !== id);
-  notificationStore.showNotification('Richiesta eliminata', 'success');
+const deleteRimborso = async (id) => {
+  if (!confirm('Sei sicuro di voler eliminare questa richiesta di rimborso?')) {
+    return;
+  }
+
+  try {
+    loading.value = true;
+
+    await axios.delete(`${API_URL}/api/expenses/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    });
+
+    rimborsiList.value = rimborsiList.value.filter(r => r.id !== id);
+    notificationStore.showNotification('Richiesta eliminata con successo', 'success');
+
+  } catch (error) {
+    console.error('Error deleting expense:', error);
+    notificationStore.showNotification(
+      error.response?.data?.error || 'Errore durante l\'eliminazione',
+      'error'
+    );
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Filter rimborsi
@@ -381,24 +415,30 @@ const filteredRimborsi = computed(() => {
 
 // Computed statistics
 const totalRequested = computed(() => {
-  return rimborsiList.value.reduce((sum, r) => sum + r.amount, 0);
+  return rimborsiList.value.reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 });
 
 const totalApproved = computed(() => {
   return rimborsiList.value
     .filter(r => r.status === 'approved')
-    .reduce((sum, r) => sum + r.amount, 0);
+    .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 });
 
 const totalPending = computed(() => {
   return rimborsiList.value
     .filter(r => r.status === 'pending')
-    .reduce((sum, r) => sum + r.amount, 0);
+    .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 });
 
 // Format date
 const formatDate = (dateString) => {
+  if (!dateString) return 'Data non disponibile';
+  
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return 'Data non valida';
+  }
+  
   const options = { day: '2-digit', month: 'long', year: 'numeric' };
   return date.toLocaleDateString('it-IT', options);
 };

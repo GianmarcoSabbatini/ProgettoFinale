@@ -1,14 +1,17 @@
 # 📊 Dashboard Aziendale
 
-Dashboard moderna per la gestione del profilo utente e messaggi aziendali, costruita con Vue.js 3 e Node.js.
+Dashboard moderna e sicura per la gestione del profilo utente e messaggi aziendali, costruita con Vue.js 3 e Node.js.
 
 ## ✨ Caratteristiche Principali
 
-### 🔐 Autenticazione
-- Registrazione multi-step (2 fasi)
-- Login sicuro con JWT
-- Password hashing con bcrypt
-- Sistema di notifiche snackbar
+### 🔐 Autenticazione & Sicurezza
+- **JWT (JSON Web Tokens)** con scadenza automatica (24h)
+- **Registrazione multi-step** con validazione completa
+- **Password hashing** con bcrypt (10 rounds)
+- **Rate Limiting** - Protezione da brute force
+- **Input Validation** - express-validator su tutti gli endpoint
+- **Security Headers** - Helmet configurato
+- **CORS** - Configurazione sicura per produzione
 
 ### 👤 Gestione Profilo
 - Avatar generato automaticamente con iniziali e colore casuale
@@ -16,50 +19,84 @@ Dashboard moderna per la gestione del profilo utente e messaggi aziendali, costr
 - Visualizzazione dati utente (nome, cognome, email)
 - Interface di editing integrata
 
-### � Sistema Messaggi
+### 💬 Sistema Messaggi
 - Bacheca messaggi aziendali
-- Visualizzazione messaggi in tempo reale
-- Design card-based moderno
+- CRUD completo (Create, Read, Update, Delete)
+- Autorizzazione per modifica/eliminazione
+- Visualizzazione in tempo reale
+
+### 📝 Logging Professionale
+- **Winston** - Sistema di logging enterprise-grade
+- **Rotazione automatica** dei file di log
+- **Livelli di log** configurabili (error, warn, info, http, debug)
+- **Audit trail** completo per sicurezza
 
 ## 🛠️ Tecnologie
 
 ### Frontend
 - **Vue.js 3** - Framework JavaScript progressivo
 - **Vite** - Build tool veloce
-- **Pinia** - State management
-- **Vue Router** - Routing
-- **Axios** - HTTP client
+- **Pinia** - State management moderno
+- **Vue Router** - Routing con guard di autenticazione
+- **Axios** - HTTP client con interceptor
 - **Font Awesome** - Icone
 
 ### Backend
 - **Node.js** - Runtime JavaScript
-- **Express** - Framework web
-- **MySQL** - Database relazionale
-- **bcryptjs** - Password hashing
-- **CORS** - Cross-Origin Resource Sharing
+- **Express** - Framework web minimalista
+- **MySQL2** - Database relazionale con connection pooling
+- **JWT** - JSON Web Tokens per autenticazione
+- **bcryptjs** - Password hashing sicuro
+- **Winston** - Logging professionale
+- **Helmet** - Security headers
+- **express-validator** - Validazione input
+- **express-rate-limit** - Protezione DDoS/brute force
+
+### Sicurezza
+- ✅ JWT authentication
+- ✅ Rate limiting
+- ✅ Input validation & sanitization
+- ✅ SQL Injection prevention
+- ✅ XSS protection
+- ✅ CORS configurato
+- ✅ Security headers (Helmet)
+- ✅ Password policy enforced
+- ✅ Environment variables
+- ✅ Connection pooling
 
 ## 📁 Struttura Progetto
 
 ```
 ProgettoFinale/
 ├── dashboard-backend/          # API Node.js + Express
+│   ├── config/
+│   │   └── logger.js          # Configurazione Winston
+│   ├── middleware/
+│   │   ├── auth.js            # Verifica JWT
+│   │   └── logger.js          # Logging HTTP requests
+│   ├── logs/                  # File di log (auto-generati)
 │   ├── server.js              # Server principale
-│   ├── reset-db.js            # Script reset database
+│   ├── .env                   # Variabili d'ambiente (NON committare!)
+│   ├── .env.example           # Template configurazione
 │   └── package.json
 │
 ├── dashboard-frontend/         # Applicazione Vue.js
 │   ├── src/
-│   │   ├── views/             # Pagine (Login, Register, Dashboard)
-│   │   ├── stores/            # Pinia stores (auth, notification)
-│   │   ├── router/            # Configurazione routing
+│   │   ├── views/             # Pagine (Login, Register, Dashboard, ecc.)
+│   │   ├── stores/            # Pinia stores (auth, notification, loading)
+│   │   ├── router/            # Configurazione routing + guards
+│   │   ├── config/            # Configurazione API
 │   │   └── main.js
-│   ├── index.html
+│   ├── .env                   # Variabili d'ambiente frontend
+│   ├── .env.example           # Template
 │   └── package.json
 │
 ├── START-SERVERS.bat          # Avvio automatico
 ├── STOP-SERVERS.bat           # Stop automatico
 ├── QUICK-RESTART.bat          # Riavvio rapido
 ├── CHECK-STATUS.bat           # Verifica stato
+├── SECURITY.md                # Guida sicurezza
+├── LOGGING.md                 # Documentazione logging
 └── README.md
 ```
 
@@ -76,10 +113,47 @@ git clone https://github.com/GianmarcoSabbatini/ProgettoFinale.git
 cd ProgettoFinale
 ```
 
-### 2. Avvio Automatico (Windows)
+### 2. Configurazione Environment Variables
+
+#### Backend
+```bash
+cd dashboard-backend
+cp .env.example .env
+# Edita .env e configura:
+# - DB_PASSWORD (password MySQL)
+# - JWT_SECRET (genera chiave sicura)
+```
+
+**Genera JWT_SECRET sicuro:**
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+#### Frontend
+```bash
+cd dashboard-frontend
+cp .env.example .env
+# Verifica VITE_API_URL (default: http://localhost:3001)
+```
+
+### 3. Installazione Dipendenze
+
+#### Backend
+```bash
+cd dashboard-backend
+npm install
+```
+
+#### Frontend
+```bash
+cd dashboard-frontend
+npm install
+```
+
+### 4. Avvio Automatico (Windows)
 ```bash
 # Assicurati che MySQL sia attivo (XAMPP)
-# Poi esegui:
+# Poi esegui dalla root del progetto:
 START-SERVERS.bat
 ```
 
@@ -89,7 +163,7 @@ Il sistema:
 3. Avvia il frontend (porta 5173)
 4. Apre il browser automaticamente
 
-### 3. Setup Manuale (Alternativo)
+### 5. Setup Manuale (Alternativo)
 
 #### Backend
 ```bash
@@ -122,6 +196,34 @@ node reset-db.js
 | `QUICK-RESTART.bat` | Riavvio rapido per sviluppo |
 | `CHECK-STATUS.bat` | Verifica stato server e connettività |
 | `FIND-FRONTEND.bat` | Trova e apre il frontend su diverse porte |
+
+## 🧪 Test di Sicurezza
+
+Il progetto include una suite completa di test automatizzati per verificare sicurezza e funzionalità.
+
+### Esecuzione Test
+```bash
+cd dashboard-backend
+node test-security.js
+```
+
+### Test Inclusi (10 test)
+- ✅ Registrazione utente con JWT
+- ✅ Login con credenziali valide
+- ✅ Protezione endpoint senza token (HTTP 401)
+- ✅ Accesso autorizzato con token valido
+- ✅ Rifiuto token JWT invalidi
+- ✅ Input validation (SQL injection, XSS)
+- ✅ Rate limiting (brute force protection)
+- ✅ Security headers (Helmet)
+- ✅ CORS configuration
+- ✅ Connection pool stress test (20 richieste simultanee)
+
+### Risultati
+**Ultimo test:** 9 Ottobre 2025  
+**Esito:** ✅ **100% Test Superati (10/10)**
+
+Vedi `TEST-RESULTS.md` per il report completo.
 
 ## 🌐 URL di Sviluppo
 

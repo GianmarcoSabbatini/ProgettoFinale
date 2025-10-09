@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from './notification';
+import API_URL from '@/config/api';
 
 export const useAuthStore = defineStore('auth', () => {
     // Inizializza il token dal localStorage per mantenere il login
@@ -24,14 +25,17 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function login(email, password) {
         try {
-            const response = await axios.post('http://localhost:3001/api/login', { email, password });
+            const response = await axios.post(`${API_URL}/api/login`, { email, password });
             if (response.data.success) {
                 setToken(response.data.token);
                 // Usa il router per reindirizzare alla dashboard
                 router.push({ name: 'Dashboard' }); 
             }
         } catch (error) {
-            console.error('Errore di login:', error.response?.data?.message || error.message);
+            // Rimosso console.error per produzione
+            if (import.meta.env.DEV) {
+                console.error('Errore di login:', error.response?.data?.message || error.message);
+            }
             // Rilancia l'errore per permettere al componente di gestirlo con la snackbar
             throw error;
         }
@@ -52,7 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
                 avatar
             };
             
-            const response = await axios.post('http://localhost:3001/api/register', registrationData);
+            const response = await axios.post(`${API_URL}/api/register`, registrationData);
             if (response.data.success) {
                 setToken(response.data.token);
                 
@@ -65,7 +69,10 @@ export const useAuthStore = defineStore('auth', () => {
                 }, 100);
             }
         } catch (error) {
-            console.error('Errore di registrazione:', error.response?.data?.message || error.message);
+            // Rimosso console.error per produzione
+            if (import.meta.env.DEV) {
+                console.error('Errore di registrazione:', error.response?.data?.message || error.message);
+            }
             // Rilancia l'errore in modo che possa essere gestito dal componente
             throw error;
         }

@@ -241,6 +241,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { useNotificationStore } from '@/stores/notification';
+import API_URL from '@/config/api';
 
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
@@ -270,19 +271,23 @@ const publishQuickMessage = async () => {
   try {
     const author = `${user.value.nome} ${user.value.cognome}`;
     
-    console.log('Invio messaggio con dati:', {
-      title: 'Messaggio Bacheca',
-      content: newMessageContent.value.trim(),
-      author: author
-    });
+    if (import.meta.env.DEV) {
+      console.log('Invio messaggio con dati:', {
+        title: 'Messaggio Bacheca',
+        content: newMessageContent.value.trim(),
+        author: author
+      });
+    }
     
-    const response = await axios.post('http://localhost:3001/api/messages', {
+    const response = await axios.post(`${API_URL}/api/messages`, {
       title: 'Messaggio Bacheca',
       content: newMessageContent.value.trim(),
       author: author
     });
 
-    console.log('Risposta backend:', response.data);
+    if (import.meta.env.DEV) {
+      console.log('Risposta backend:', response.data);
+    }
 
     if (response.data.success) {
       // Ricarica i messaggi
@@ -298,18 +303,26 @@ const publishQuickMessage = async () => {
       try {
         addNotification('SISTEMA', 'Il tuo messaggio è stato pubblicato nella bacheca', 'success');
       } catch (notifError) {
-        console.error('Errore aggiunta notifica:', notifError);
+        if (import.meta.env.DEV) {
+          console.error('Errore aggiunta notifica:', notifError);
+        }
       }
     }
   } catch (error) {
-    console.error('Errore pubblicazione messaggio:', error);
-    console.error('Dettagli errore:', error.response?.data || error.message);
+    if (import.meta.env.DEV) {
+      console.error('Errore pubblicazione messaggio:', error);
+      console.error('Dettagli errore:', error.response?.data || error.message);
+    }
     notificationStore.showNotification('Errore nella pubblicazione del messaggio. Riprova.', 'error');
   }
 };
 
 const loadMessages = async () => {
-  const messagesResponse = await axios.get('http://localhost:3001/api/messages');
+  const messagesResponse = await axios.get(`${API_URL}/api/messages`, {
+      headers: {
+          'Authorization': `Bearer ${authStore.token}`
+      }
+  });
   messages.value = messagesResponse.data.messages || [];
 };
 
@@ -342,7 +355,7 @@ const saveEditMessage = async (messageId) => {
   try {
     const author = `${user.value.nome} ${user.value.cognome}`;
     
-    const response = await axios.put(`http://localhost:3001/api/messages/${messageId}`, {
+    const response = await axios.put(`${API_URL}/api/messages/${messageId}`, {
       content: editingMessageContent.value.trim(),
       author: author
     });
@@ -355,7 +368,9 @@ const saveEditMessage = async (messageId) => {
       addNotification('SISTEMA', 'Hai modificato il tuo messaggio', 'info');
     }
   } catch (error) {
-    console.error('Errore modifica messaggio:', error);
+    if (import.meta.env.DEV) {
+      console.error('Errore modifica messaggio:', error);
+    }
     notificationStore.showNotification('Errore nella modifica del messaggio. Riprova.', 'error');
   }
 };
@@ -380,7 +395,7 @@ const confirmDelete = async () => {
   try {
     const author = `${user.value.nome} ${user.value.cognome}`;
     
-    const response = await axios.delete(`http://localhost:3001/api/messages/${messageToDelete.value}`, {
+    const response = await axios.delete(`${API_URL}/api/messages/${messageToDelete.value}`, {
       data: { author: author }
     });
 
@@ -392,7 +407,9 @@ const confirmDelete = async () => {
       addNotification('SISTEMA', 'Hai eliminato un messaggio dalla bacheca', 'info');
     }
   } catch (error) {
-    console.error('Errore eliminazione messaggio:', error);
+    if (import.meta.env.DEV) {
+      console.error('Errore eliminazione messaggio:', error);
+    }
     showDeleteModal.value = false;
     messageToDelete.value = null;
     notificationStore.showNotification('Errore nell\'eliminazione del messaggio. Riprova.', 'error');
@@ -539,7 +556,7 @@ const toggleEditMode = async () => {
 
 const saveProfile = async () => {
   try {
-    const response = await axios.put('http://localhost:3001/api/profile', {
+    const response = await axios.put(`${API_URL}/api/profile`, {
       job_title: editForm.value.job_title,
       team: editForm.value.team
     }, {
@@ -561,7 +578,9 @@ const saveProfile = async () => {
       addNotification('SISTEMA', 'Il tuo profilo è stato aggiornato con successo', 'success');
     }
   } catch (error) {
-    console.error('Errore nel salvataggio del profilo:', error);
+    if (import.meta.env.DEV) {
+      console.error('Errore nel salvataggio del profilo:', error);
+    }
     notificationStore.showNotification('Errore nel salvataggio delle modifiche. Riprova.', 'error');
   }
 };
@@ -585,9 +604,12 @@ const confirmLogout = () => {
 onMounted(async () => {
   try {
     await loadMessages();
-    console.log('Messaggi ricevuti:', messages.value);
+    
+    if (import.meta.env.DEV) {
+      console.log('Messaggi ricevuti:', messages.value);
+    }
 
-    const profileResponse = await axios.get('http://localhost:3001/api/profile', {
+    const profileResponse = await axios.get(`${API_URL}/api/profile`, {
         headers: {
             'Authorization': `Bearer ${authStore.token}`
         }
@@ -599,7 +621,9 @@ onMounted(async () => {
     addNotification('HR', 'Ricordati di completare il tuo profilo con Job Title e Team', 'warning');
     addNotification('ADMIN', 'Nuove policy aziendali disponibili nella sezione Documenti', 'message');
   } catch (error) {
-    console.error("Errore nel caricamento dei dati:", error);
+    if (import.meta.env.DEV) {
+      console.error("Errore nel caricamento dei dati:", error);
+    }
   }
 });
 </script>
