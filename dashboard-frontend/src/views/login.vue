@@ -1,8 +1,8 @@
 <template>
   <div class="login-page-wrapper">
     <div class="login-container">
-      <h1>Azienda Intranet</h1>
-      <p>Qui scrivi un testo che vuoi tu.</p>
+      <h1>CoreTeam Digital</h1>
+      <p>La tua piattaforma aziendale integrata.</p>
       
       <form @submit.prevent="handleLogin">
         <div class="form-group">

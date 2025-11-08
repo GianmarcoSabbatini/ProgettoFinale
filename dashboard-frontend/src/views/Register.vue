@@ -489,10 +489,17 @@ h1 {
     color: #dc3545;
 }
 
-.submit-btn {
-    width: 100%;
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+/* Stili comuni per entrambi i bottoni */
+.submit-btn,
+.secondary-btn {
+    flex: 1;
     padding: 16px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
     border: none;
     border-radius: 10px;
@@ -500,12 +507,17 @@ h1 {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-    margin-bottom: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    min-height: 56px;
+}
+
+/* Bottone principale (Avanti / Completa Registrazione) - Viola */
+.submit-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .submit-btn:hover {
@@ -518,32 +530,20 @@ h1 {
     transform: translateY(0);
 }
 
-.button-group {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
-}
-
+/* Bottone secondario (Indietro) - Rosso */
 .secondary-btn {
-    flex: 1;
-    padding: 16px;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
 .secondary-btn:hover {
-    background-color: #5a6268;
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
 }
 
-.submit-btn {
-    flex: 1;
+.secondary-btn:active {
+    transform: translateY(0);
 }
 
 .login-link {

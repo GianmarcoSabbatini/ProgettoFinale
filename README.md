@@ -1,6 +1,6 @@
-# 📊 Dashboard Aziendale
+# 📊 CoreTeam Digital - Dashboard Aziendale
 
-Dashboard moderna e sicura per la gestione del profilo utente e messaggi aziendali, costruita con Vue.js 3 e Node.js.
+Dashboard aziendale moderna e completa per la gestione di profili, timesheet, rimborsi spese e buste paga. Costruita con Vue.js 3 e Node.js, include generazione automatica delle buste paga basata sui dati timesheet.
 
 ## ✨ Caratteristiche Principali
 
@@ -16,7 +16,8 @@ Dashboard moderna e sicura per la gestione del profilo utente e messaggi azienda
 ### 👤 Gestione Profilo
 - Avatar generato automaticamente con iniziali e colore casuale
 - Modifica Job Title e Team in tempo reale
-- Visualizzazione dati utente (nome, cognome, email)
+- Tariffa oraria personalizzabile per calcolo buste paga
+- Visualizzazione dati utente completi (nome, cognome, email)
 - Interface di editing integrata
 
 ### 💬 Sistema Messaggi
@@ -25,7 +26,29 @@ Dashboard moderna e sicura per la gestione del profilo utente e messaggi azienda
 - Autorizzazione per modifica/eliminazione
 - Visualizzazione in tempo reale
 
-### 📝 Logging Professionale
+### ⏰ Timesheet
+- Registrazione ore lavorate per progetto
+- Filtri per data e progetto
+- Statistiche mensili e settimanali
+- Esportazione dati
+- Base per generazione buste paga automatiche
+
+### � Rimborso Spese
+- Richiesta rimborsi con categorizzazione
+- Upload ricevute/fatture
+- Stati: In attesa, Approvato, Rifiutato
+- Storico completo rimborsi
+- Download ricevute
+
+### 💼 Buste Paga (Sistema Automatico)
+- **Generazione automatica** da dati timesheet
+- **Calcolo INPS** (9.19%)
+- **IRPEF progressiva** (scaglioni italiani)
+- **Download PDF** professionale
+- **Dettaglio completo** in modal interattiva
+- Storico buste paga con filtri
+
+### �📝 Logging Professionale
 - **Winston** - Sistema di logging enterprise-grade
 - **Rotazione automatica** dei file di log
 - **Livelli di log** configurabili (error, warn, info, http, debug)
@@ -38,7 +61,7 @@ Dashboard moderna e sicura per la gestione del profilo utente e messaggi azienda
 - **Vite** - Build tool veloce
 - **Pinia** - State management moderno
 - **Vue Router** - Routing con guard di autenticazione
-- **Axios** - HTTP client con interceptor
+- **jsPDF** - Generazione PDF per buste paga
 - **Font Awesome** - Icone
 
 ### Backend

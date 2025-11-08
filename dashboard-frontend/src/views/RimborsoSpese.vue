@@ -209,6 +209,7 @@
                 <i class="fas fa-trash"></i> Elimina
               </button>
               <button 
+                @click="downloadReceipt(rimborso)"
                 class="download-receipt-btn"
                 v-if="rimborso.receipt"
               >
@@ -501,6 +502,46 @@ const getStatusLabel = (status) => {
     rejected: 'Rifiutato'
   };
   return labels[status] || status;
+};
+
+// Download receipt
+const downloadReceipt = (rimborso) => {
+  if (!rimborso.receipt) {
+    notificationStore.showNotification('Nessuna ricevuta disponibile', 'warning');
+    return;
+  }
+
+  // Crea un elemento <a> temporaneo per simulare il download
+  // Nota: Attualmente il backend non gestisce il vero storage dei file
+  // Questo simula il download creando un file di testo con le info del rimborso
+  
+  const content = `
+RICEVUTA RIMBORSO SPESE
+========================
+
+Data: ${formatDate(rimborso.date)}
+Categoria: ${rimborso.category}
+Importo: €${rimborso.amount.toFixed(2)}
+Metodo di Pagamento: ${rimborso.payment}
+Descrizione: ${rimborso.description}
+Status: ${getStatusLabel(rimborso.status)}
+File Originale: ${rimborso.receipt}
+
+========================
+Generato il ${new Date().toLocaleDateString('it-IT')}
+  `.trim();
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `ricevuta-${rimborso.id}-${rimborso.receipt}`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+  
+  notificationStore.showNotification('Ricevuta scaricata con successo', 'success');
 };
 </script>
 

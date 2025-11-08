@@ -1,54 +1,6 @@
 <template>
   <div id="app-container">
-    <header class="main-header">
-      <div class="logo">Azienda</div>
-      <nav class="main-nav">
-        <!-- Dashboard è la home, non serve navigazione qui -->
-      </nav>
-      <div class="header-actions">
-        <div class="notification-container">
-          <i @click="toggleNotifications" class="fas fa-bell action-icon" :class="{ 'has-notifications': headerNotificationStore.notifications.length > 0 }"></i>
-          <span v-if="headerNotificationStore.notifications.length > 0" class="notification-badge">{{ headerNotificationStore.notifications.length }}</span>
-          
-          <!-- Dropdown Notifiche -->
-          <transition name="dropdown">
-            <div v-if="showNotifications" class="notifications-dropdown">
-              <div class="notifications-header">
-                <h3>Notifiche</h3>
-                <button @click="headerNotificationStore.clearAllNotifications()" class="clear-all-btn">Cancella tutto</button>
-              </div>
-              <div class="notifications-list">
-                <div v-if="headerNotificationStore.notifications.length === 0" class="no-notifications">
-                  <i class="fas fa-inbox"></i>
-                  <p>Nessuna notifica</p>
-                </div>
-                <div 
-                  v-for="notification in headerNotificationStore.notifications" 
-                  :key="notification.id" 
-                  class="notification-item"
-                  :class="'notification-' + notification.type"
-                >
-                  <div class="notification-icon">
-                    <i :class="headerNotificationStore.getNotificationIcon(notification.type)"></i>
-                  </div>
-                  <div class="notification-content">
-                    <div class="notification-sender">{{ notification.sender }}</div>
-                    <div class="notification-message">{{ notification.message }}</div>
-                    <div class="notification-time">{{ notification.time }}</div>
-                  </div>
-                  <button @click="headerNotificationStore.removeNotification(notification.id)" class="remove-notification">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </transition>
-        </div>
-        <button @click="openLogoutModal" class="logout-button" title="Logout">
-            <i class="fas fa-sign-out-alt action-icon"></i>
-        </button>
-      </div>
-    </header>
+    <MainHeader />
 
     <QuickActions activePage="dashboard" />
 
@@ -196,27 +148,6 @@
         </div>
       </div>
     </transition>
-
-    <!-- Modale Conferma Logout -->
-    <transition name="modal">
-      <div v-if="showLogoutModal" class="modal-overlay" @click="cancelLogout">
-        <div class="logout-modal-content" @click.stop>
-          <div class="logout-modal-icon">
-            <i class="fas fa-sign-out-alt"></i>
-          </div>
-          <h3 class="logout-modal-title">Conferma Logout</h3>
-          <p class="logout-modal-text">Sei sicuro di voler uscire dal tuo account?</p>
-          <div class="logout-modal-actions">
-            <button @click="cancelLogout" class="cancel-logout-modal-btn">
-              <i class="fas fa-times"></i> Annulla
-            </button>
-            <button @click="confirmLogout" class="confirm-logout-btn">
-              <i class="fas fa-sign-out-alt"></i> Esci
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
@@ -228,6 +159,7 @@ import { useNotificationStore } from '@/stores/notification';
 import { useHeaderNotificationStore } from '@/stores/headerNotification';
 import API_URL from '@/config/api';
 import QuickActions from '@/components/QuickActions.vue';
+import MainHeader from '@/components/MainHeader.vue';
 
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
@@ -414,13 +346,6 @@ const confirmDelete = async () => {
   }
 };
 
-// Sistema Notifiche
-const showNotifications = ref(false);
-
-const toggleNotifications = () => {
-  showNotifications.value = !showNotifications.value;
-};
-
 // Funzione per formattare la data
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -604,7 +529,26 @@ onMounted(async () => {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
 }
-.logo { font-size: 1.5rem; font-weight: bold; }
+.logo { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.75rem; 
+  font-size: 1.5rem; 
+  font-weight: bold; 
+}
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .main-nav { margin: 0 auto; display: flex; gap: 1.5rem; }
 .nav-link { text-decoration: none; color: #777; font-weight: 500; }
 .nav-link.active { color: #333; }
@@ -1542,6 +1486,8 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 @media (max-width: 1024px) {
   .main-header { padding: 0.75rem 1.5rem; }
   .logo { font-size: 1.3rem; }
+  .logo-icon { width: 32px; height: 32px; }
+  .logo-text { font-size: 1.15rem; }
   .main-nav { gap: 1rem; }
   .nav-link { font-size: 0.9rem; }
   .dashboard-content { padding: 0 1.5rem 1.5rem 1.5rem; }
@@ -1549,10 +1495,12 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 
 @media (max-width: 768px) {
   .main-header { padding: 0.75rem 1rem; }
-  .logo { font-size: 1.2rem; }
+  .logo { font-size: 1.2rem; gap: 0.5rem; }
+  .logo-icon { width: 28px; height: 28px; }
+  .logo-text { font-size: 1.05rem; }
   .main-nav { display: none; }
   .header-actions { gap: 1rem; font-size: 1.1rem; }
   .dashboard-content { padding: 0 1rem 1rem 1rem; }
-  .main-panel { grid-template-columns: 1fr; gap: 1.5rem; }  .message-board, .user-profile { padding: 1.25rem; }  h2 { font-size: 1.1rem; margin-bottom: 1rem; }  .message-composer textarea { font-size: 0.9rem; padding: 0.75rem; }  .send-message-btn { padding: 0.7rem 1.25rem; font-size: 0.85rem; }  .message-item { padding: 1rem; }  .message-author { gap: 0.75rem; }  .avatar { width: 36px; height: 36px; font-size: 0.85rem; }  .message-author strong { font-size: 0.9rem; }  .message-author small { font-size: 0.75rem; }  .message-content { font-size: 0.9rem; line-height: 1.5; }  .message-actions { gap: 0.5rem; }  .action-btn { width: 32px; height: 32px; font-size: 0.85rem; }  .edit-textarea { font-size: 0.9rem; padding: 0.75rem; }  .edit-actions { gap: 0.5rem; }  .cancel-edit-btn, .save-edit-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }  .profile-header h2 { font-size: 1rem; }  .edit-profile-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }  .profile-avatar { width: 70px; height: 70px; font-size: 1.8rem; }  .profile-name { font-size: 1.1rem; }  .profile-role { font-size: 0.85rem; }  .info-item label { font-size: 0.8rem; }  .info-item p { font-size: 0.9rem; }  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }  .notifications-header { padding: 0.85rem 1rem; }  .notifications-header h3 { font-size: 1rem; }  .notification-item { padding: 0.85rem 1rem; }  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }  .notification-sender { font-size: 0.85rem; }  .notification-message { font-size: 0.8rem; }  .notification-time { font-size: 0.7rem; }  .delete-modal-content, .logout-modal-content { padding: 1.5rem; max-width: 90%; }  .delete-modal-icon, .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }  .delete-modal-title, .logout-modal-title { font-size: 1.3rem; }  .delete-modal-text, .logout-modal-text { font-size: 0.9rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }}@media (max-width: 480px) {  .main-header { padding: 0.75rem; }  .logo { font-size: 1.1rem; }  .header-actions { gap: 0.75rem; font-size: 1rem; }  .dashboard-content { padding: 0 0.75rem 0.75rem 0.75rem; }  .message-board, .user-profile { padding: 1rem; }  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }  .message-actions { flex-direction: column; gap: 0.4rem; }  .action-btn { width: 100%; height: 36px; }  .edit-actions { flex-direction: column; }  .cancel-edit-btn, .save-edit-btn { width: 100%; }  .delete-modal-actions, .logout-modal-actions { flex-direction: column; gap: 0.5rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }}
+  .main-panel { grid-template-columns: 1fr; gap: 1.5rem; }  .message-board, .user-profile { padding: 1.25rem; }  h2 { font-size: 1.1rem; margin-bottom: 1rem; }  .message-composer textarea { font-size: 0.9rem; padding: 0.75rem; }  .send-message-btn { padding: 0.7rem 1.25rem; font-size: 0.85rem; }  .message-item { padding: 1rem; }  .message-author { gap: 0.75rem; }  .avatar { width: 36px; height: 36px; font-size: 0.85rem; }  .message-author strong { font-size: 0.9rem; }  .message-author small { font-size: 0.75rem; }  .message-content { font-size: 0.9rem; line-height: 1.5; }  .message-actions { gap: 0.5rem; }  .action-btn { width: 32px; height: 32px; font-size: 0.85rem; }  .edit-textarea { font-size: 0.9rem; padding: 0.75rem; }  .edit-actions { gap: 0.5rem; }  .cancel-edit-btn, .save-edit-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }  .profile-header h2 { font-size: 1rem; }  .edit-profile-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }  .profile-avatar { width: 70px; height: 70px; font-size: 1.8rem; }  .profile-name { font-size: 1.1rem; }  .profile-role { font-size: 0.85rem; }  .info-item label { font-size: 0.8rem; }  .info-item p { font-size: 0.9rem; }  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }  .notifications-header { padding: 0.85rem 1rem; }  .notifications-header h3 { font-size: 1rem; }  .notification-item { padding: 0.85rem 1rem; }  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }  .notification-sender { font-size: 0.85rem; }  .notification-message { font-size: 0.8rem; }  .notification-time { font-size: 0.7rem; }  .delete-modal-content, .logout-modal-content { padding: 1.5rem; max-width: 90%; }  .delete-modal-icon, .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }  .delete-modal-title, .logout-modal-title { font-size: 1.3rem; }  .delete-modal-text, .logout-modal-text { font-size: 0.9rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }}@media (max-width: 480px) {  .main-header { padding: 0.75rem; }  .logo { font-size: 1.1rem; gap: 0.4rem; }  .logo-icon { width: 24px; height: 24px; }  .logo-text { font-size: 0.95rem; }  .header-actions { gap: 0.75rem; font-size: 1rem; }  .dashboard-content { padding: 0 0.75rem 0.75rem 0.75rem; }  .message-board, .user-profile { padding: 1rem; }  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }  .message-actions { flex-direction: column; gap: 0.4rem; }  .action-btn { width: 100%; height: 36px; }  .edit-actions { flex-direction: column; }  .cancel-edit-btn, .save-edit-btn { width: 100%; }  .delete-modal-actions, .logout-modal-actions { flex-direction: column; gap: 0.5rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }}
 </style>
 

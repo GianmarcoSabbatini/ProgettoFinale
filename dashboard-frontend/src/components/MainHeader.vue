@@ -1,6 +1,27 @@
 <template>
   <header class="main-header">
-    <div class="logo">Azienda</div>
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cerchio esterno -->
+        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#gradient1)" stroke-width="2"/>
+        <!-- Tre figure interconnesse (team) -->
+        <circle cx="20" cy="12" r="4" fill="url(#gradient1)"/>
+        <circle cx="14" cy="24" r="4" fill="url(#gradient1)"/>
+        <circle cx="26" cy="24" r="4" fill="url(#gradient1)"/>
+        <!-- Linee di connessione -->
+        <line x1="20" y1="16" x2="16" y2="20" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="20" y1="16" x2="24" y2="20" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="18" y1="24" x2="22" y2="24" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
+        <!-- Gradiente -->
+        <defs>
+          <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">CoreTeam Digital</span>
+    </div>
     <nav class="main-nav">
       <!-- Dashboard action è nelle quick actions di ogni pagina -->
     </nav>
@@ -120,7 +141,26 @@ const confirmLogout = () => {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
 }
-.logo { font-size: 1.5rem; font-weight: bold; }
+.logo { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.75rem; 
+  font-size: 1.5rem; 
+  font-weight: bold; 
+}
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .main-nav { margin: 0 auto; display: flex; gap: 1.5rem; }
 
 .header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: #777; }
@@ -457,11 +497,15 @@ const confirmLogout = () => {
 @media (max-width: 1024px) {
   .main-header { padding: 0.75rem 1.5rem; }
   .logo { font-size: 1.3rem; }
+  .logo-icon { width: 32px; height: 32px; }
+  .logo-text { font-size: 1.15rem; }
 }
 
 @media (max-width: 768px) {
   .main-header { padding: 0.75rem 1rem; }
-  .logo { font-size: 1.2rem; }
+  .logo { font-size: 1.2rem; gap: 0.5rem; }
+  .logo-icon { width: 28px; height: 28px; }
+  .logo-text { font-size: 1.05rem; }
   .main-nav { display: flex; }
   .header-actions { gap: 1rem; font-size: 1.1rem; }
   .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }
@@ -481,7 +525,9 @@ const confirmLogout = () => {
 
 @media (max-width: 480px) {
   .main-header { padding: 0.75rem; }
-  .logo { font-size: 1.1rem; }
+  .logo { font-size: 1.1rem; gap: 0.4rem; }
+  .logo-icon { width: 24px; height: 24px; }
+  .logo-text { font-size: 0.95rem; }
   .header-actions { gap: 0.75rem; font-size: 1rem; }
   .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }
   .logout-modal-actions { flex-direction: column; gap: 0.5rem; }

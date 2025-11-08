@@ -103,11 +103,25 @@ async function initDB() {
                 job_title VARCHAR(100),
                 team VARCHAR(50),
                 avatar VARCHAR(20) DEFAULT '#4ECDC4',
+                hourly_rate DECIMAL(10,2) DEFAULT 15.00,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         `);
         logger.debug('Tabella profiles verificata/creata');
+        
+        // Add hourly_rate column if it doesn't exist (for existing databases)
+        try {
+            await db.execute(`
+                ALTER TABLE profiles 
+                ADD COLUMN hourly_rate DECIMAL(10,2) DEFAULT 15.00
+            `);
+            logger.info('Colonna hourly_rate aggiunta alla tabella profiles');
+        } catch (error) {
+            if (error.code !== 'ER_DUP_FIELDNAME') {
+                logger.debug('Colonna hourly_rate già esistente o errore: ' + error.message);
+            }
+        }
 
         await db.execute(`
             CREATE TABLE IF NOT EXISTS messages (
@@ -125,9 +139,9 @@ async function initDB() {
         if (messages[0].count === 0) {
             await db.execute(`
                 INSERT INTO messages (title, content, author) VALUES 
-                ('Benvenuto nella Dashboard', 'Questa è la tua dashboard personale. Qui puoi visualizzare messaggi e gestire il tuo profilo.', 'Sistema'),
-                ('Aggiornamento Sistema', 'Il sistema è stato aggiornato con nuove funzionalità per migliorare la tua esperienza.', 'Admin'),
-                ('Promemoria', 'Ricordati di aggiornare le tue informazioni di profilo se necessario.', 'HR')
+                ('Benvenuto in CoreTeam Digital', 'Questa è la tua dashboard personale. Qui puoi visualizzare messaggi, gestire il tuo profilo, timesheet e molto altro.', 'Sistema'),
+                ('Aggiornamento Sistema', 'Il sistema è stato aggiornato con nuove funzionalità per migliorare la tua esperienza lavorativa.', 'Admin'),
+                ('Promemoria', 'Ricordati di registrare le tue ore nel timesheet e di aggiornare le tue informazioni di profilo se necessario.', 'Risorse Umane')
             `);
             logger.info('Messaggi di esempio inseriti nel database');
         }
@@ -165,6 +179,25 @@ async function initDB() {
             )
         `);
         logger.debug('Tabella expense_reimbursement verificata/creata');
+
+        // Create payslips table
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS payslips (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                month VARCHAR(50) NOT NULL,
+                year INT NOT NULL,
+                gross_amount DECIMAL(10,2) NOT NULL,
+                net_amount DECIMAL(10,2) NOT NULL,
+                issue_date DATE NOT NULL,
+                issued_by VARCHAR(100) NOT NULL,
+                status ENUM('paid', 'pending') DEFAULT 'paid',
+                salary_details JSON,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+        logger.debug('Tabella payslips verificata/creata');
         
         logger.info('Inizializzazione database completata con successo');
 
@@ -657,7 +690,7 @@ app.get('/api/timesheet', verifyToken, async (req, res) => {
 app.post('/api/timesheet', verifyToken, [
     body('date').isDate(),
     body('project').trim().notEmpty(),
-    body('hours').isFloat({ min: 0.5, max: 24 }), // Aumentato a 24 per permettere straordinari
+    body('hours').isFloat({ min: 0.5, max: 24 }).withMessage('Le ore devono essere tra 0.5 e 24'),
     body('type').trim().notEmpty(),
     body('description').trim().notEmpty()
 ], async (req, res) => {
@@ -795,7 +828,7 @@ app.get('/api/expenses', verifyToken, async (req, res) => {
 // POST new expense reimbursement
 app.post('/api/expenses', verifyToken, [
     body('date').isDate(),
-    body('amount').isFloat({ min: 0.01 }),
+    body('amount').isFloat({ min: 0.01 }).withMessage('L\'importo deve essere maggiore di 0'),
     body('category').trim().notEmpty(),
     body('payment_method').trim().notEmpty(),
     body('description').trim().notEmpty()
@@ -906,6 +939,263 @@ app.delete('/api/expenses/:id', verifyToken, async (req, res) => {
         });
     }
 });
+
+// ============================================
+// PAYSLIPS API
+// ============================================
+
+// GET all payslips for user
+app.get('/api/payslips', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        
+        const [payslips] = await db.execute(
+            'SELECT * FROM payslips WHERE user_id = ? ORDER BY year DESC, FIELD(month, "Dicembre", "Novembre", "Ottobre", "Settembre", "Agosto", "Luglio", "Giugno", "Maggio", "Aprile", "Marzo", "Febbraio", "Gennaio") DESC',
+            [userId]
+        );
+        
+        logger.debug('Buste paga recuperate', { userId, count: payslips.length });
+        
+        res.json({
+            success: true,
+            payslips
+        });
+    } catch (error) {
+        logger.error('Errore durante il recupero delle buste paga', {
+            error: error.message,
+            userId: req.user.userId
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante il recupero delle buste paga'
+        });
+    }
+});
+
+// POST new payslip (admin only - per ora senza verifica admin)
+app.post('/api/payslips', verifyToken, [
+    body('month').trim().notEmpty(),
+    body('year').isInt({ min: 2000, max: 2100 }),
+    body('gross_amount').isFloat({ min: 0.01 }),
+    body('net_amount').isFloat({ min: 0.01 }),
+    body('issue_date').isDate(),
+    body('issued_by').trim().notEmpty()
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dati non validi',
+                errors: errors.array()
+            });
+        }
+
+        const userId = req.user.userId;
+        const { month, year, gross_amount, net_amount, issue_date, issued_by, salary_details } = req.body;
+        
+        logger.info('Inserimento busta paga', { userId, month, year });
+        
+        const [result] = await db.execute(
+            'INSERT INTO payslips (user_id, month, year, gross_amount, net_amount, issue_date, issued_by, salary_details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, month, year, gross_amount, net_amount, issue_date, issued_by, JSON.stringify(salary_details || {})]
+        );
+        
+        logger.info('Busta paga inserita con successo', { userId, payslipId: result.insertId });
+        
+        res.json({
+            success: true,
+            message: 'Busta paga creata con successo',
+            payslip: {
+                id: result.insertId,
+                user_id: userId,
+                month,
+                year,
+                gross_amount,
+                net_amount,
+                issue_date,
+                issued_by,
+                status: 'paid'
+            }
+        });
+    } catch (error) {
+        logger.error('Errore durante inserimento busta paga', {
+            error: error.message,
+            userId: req.user.userId
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante la creazione della busta paga'
+        });
+    }
+});
+
+// POST generate payslip from timesheet
+app.post('/api/payslips/generate', verifyToken, [
+    body('month').trim().notEmpty(),
+    body('year').isInt({ min: 2000, max: 2100 })
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dati non validi',
+                errors: errors.array()
+            });
+        }
+
+        const userId = req.user.userId;
+        const { month, year } = req.body;
+        
+        logger.info('Generazione busta paga da timesheet', { userId, month, year });
+        
+        // Get user profile with hourly rate
+        const [profiles] = await db.execute(
+            'SELECT p.*, CONCAT(p.nome, " ", p.cognome) as full_name, p.hourly_rate FROM profiles p WHERE p.user_id = ?',
+            [userId]
+        );
+        
+        if (profiles.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Profilo utente non trovato'
+            });
+        }
+        
+        const profile = profiles[0];
+        const hourlyRate = parseFloat(profile.hourly_rate) || 15.00;
+        
+        // Check if payslip already exists for this month/year
+        const [existing] = await db.execute(
+            'SELECT id FROM payslips WHERE user_id = ? AND month = ? AND year = ?',
+            [userId, month, year]
+        );
+        
+        if (existing.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Busta paga già esistente per questo periodo'
+            });
+        }
+        
+        // Get timesheet entries for the specified month/year
+        const monthNum = getMonthNumber(month);
+        const [timeEntries] = await db.execute(
+            'SELECT * FROM timesheet WHERE user_id = ? AND MONTH(date) = ? AND YEAR(date) = ?',
+            [userId, monthNum, year]
+        );
+        
+        if (timeEntries.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nessuna registrazione timesheet trovata per questo periodo'
+            });
+        }
+        
+        // Calculate total hours
+        const totalHours = timeEntries.reduce((sum, entry) => sum + parseFloat(entry.hours), 0);
+        
+        // Calculate gross amount (simple: hours * hourly_rate)
+        const grossAmount = totalHours * hourlyRate;
+        
+        // Calculate deductions
+        const inpsRate = 0.0919; // 9.19% INPS
+        const inpsAmount = grossAmount * inpsRate;
+        
+        // IRPEF progressive (simplified)
+        let irpefAmount = 0;
+        if (grossAmount <= 15000) {
+            irpefAmount = grossAmount * 0.23;
+        } else if (grossAmount <= 28000) {
+            irpefAmount = 15000 * 0.23 + (grossAmount - 15000) * 0.27;
+        } else if (grossAmount <= 55000) {
+            irpefAmount = 15000 * 0.23 + 13000 * 0.27 + (grossAmount - 28000) * 0.38;
+        } else {
+            irpefAmount = 15000 * 0.23 + 13000 * 0.27 + 27000 * 0.38 + (grossAmount - 55000) * 0.41;
+        }
+        
+        // Calculate net amount
+        const totalDeductions = inpsAmount + irpefAmount;
+        const netAmount = grossAmount - totalDeductions;
+        
+        // Prepare salary details JSON
+        const salaryDetails = {
+            hourly_rate: hourlyRate,
+            total_hours: totalHours,
+            gross_base: grossAmount,
+            deductions: {
+                inps: {
+                    rate: inpsRate,
+                    amount: inpsAmount
+                },
+                irpef: {
+                    amount: irpefAmount
+                }
+            },
+            total_deductions: totalDeductions,
+            net_amount: netAmount,
+            timesheet_entries: timeEntries.length
+        };
+        
+        // Create issue date (first day of next month)
+        const issueDate = new Date(year, monthNum, 1);
+        const issueDateStr = issueDate.toISOString().split('T')[0];
+        
+        // Insert payslip
+        const [result] = await db.execute(
+            'INSERT INTO payslips (user_id, month, year, gross_amount, net_amount, issue_date, issued_by, salary_details) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, month, year, grossAmount.toFixed(2), netAmount.toFixed(2), issueDateStr, 'CoreTeam Digital - Sistema Automatico', JSON.stringify(salaryDetails)]
+        );
+        
+        logger.info('Busta paga generata con successo', { 
+            userId, 
+            payslipId: result.insertId,
+            totalHours,
+            grossAmount: grossAmount.toFixed(2),
+            netAmount: netAmount.toFixed(2)
+        });
+        
+        res.json({
+            success: true,
+            message: 'Busta paga generata con successo',
+            payslip: {
+                id: result.insertId,
+                user_id: userId,
+                month,
+                year,
+                gross_amount: grossAmount.toFixed(2),
+                net_amount: netAmount.toFixed(2),
+                issue_date: issueDateStr,
+                issued_by: 'CoreTeam Digital - Sistema Automatico',
+                status: 'paid',
+                details: salaryDetails
+            }
+        });
+    } catch (error) {
+        logger.error('Errore durante generazione busta paga', {
+            error: error.message,
+            userId: req.user.userId
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante la generazione della busta paga'
+        });
+    }
+});
+
+// Helper function to convert month name to number
+function getMonthNumber(monthName) {
+    const months = {
+        'Gennaio': 1, 'Febbraio': 2, 'Marzo': 3, 'Aprile': 4,
+        'Maggio': 5, 'Giugno': 6, 'Luglio': 7, 'Agosto': 8,
+        'Settembre': 9, 'Ottobre': 10, 'Novembre': 11, 'Dicembre': 12
+    };
+    return months[monthName] || 1;
+}
 
 // Middleware per gestione errori (deve essere alla fine, dopo tutte le route)
 app.use(errorLogger);
