@@ -12,6 +12,7 @@ require('dotenv').config();
 const logger = require('./config/logger');
 const { requestLogger, errorLogger } = require('./middleware/logger');
 const { verifyToken } = require('./middleware/auth');
+const emailService = require('./config/email');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,8 +22,21 @@ app.use(helmet());
 app.use(compression());
 
 // CORS Configuration
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? [process.env.FRONTEND_URL].filter(Boolean)
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', process.env.FRONTEND_URL].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Permetti richieste senza origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
@@ -172,7 +186,7 @@ async function initDB() {
                 category VARCHAR(100) NOT NULL,
                 payment_method VARCHAR(100) NOT NULL,
                 description TEXT NOT NULL,
-                receipt_filename VARCHAR(255),
+                receipt_url VARCHAR(255),
                 status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -198,6 +212,22 @@ async function initDB() {
             )
         `);
         logger.debug('Tabella payslips verificata/creata');
+
+        // Create password_resets table
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                token VARCHAR(64) NOT NULL UNIQUE,
+                expires_at DATETIME NOT NULL,
+                used BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_token (token),
+                INDEX idx_expires (expires_at)
+            )
+        `);
+        logger.debug('Tabella password_resets verificata/creata');
         
         logger.info('Inizializzazione database completata con successo');
 
@@ -211,7 +241,6 @@ async function initDB() {
             error: error.message,
             code: error.code 
         });
-        console.error('Stack trace completo:', error);
         process.exit(1);
     }
 }
@@ -379,6 +408,233 @@ app.post('/api/login', loginLimiter, [
         });
     }
 });
+
+// ==================== PASSWORD RESET ====================
+
+// Request password reset
+app.post('/api/auth/forgot-password', [
+    body('email').isEmail().normalizeEmail()
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email non valida' 
+            });
+        }
+
+        const { email } = req.body;
+        
+        logger.info('Richiesta reset password', { email });
+
+        // Find user
+        const [users] = await db.execute('SELECT id, username, email FROM users WHERE email = ?', [email]);
+        
+        if (users.length === 0) {
+            // Per sicurezza, non rivelare se l'email esiste o meno
+            logger.warn('Reset password richiesto per email non esistente', { email });
+            return res.json({
+                success: true,
+                message: 'Se l\'email esiste, riceverai un token per il reset',
+                token: null
+            });
+        }
+
+        const user = users[0];
+
+        // Generate random token
+        const crypto = require('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+        
+        // Token valido per 1 ora
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+        // Delete old tokens for this user
+        await db.execute('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
+
+        // Save new token
+        await db.execute(
+            'INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)',
+            [user.id, token, expiresAt]
+        );
+
+        logger.info('Token reset password generato', { 
+            userId: user.id, 
+            username: user.username,
+            expiresAt 
+        });
+
+        // Invia email con il token
+        try {
+            const emailResult = await emailService.sendPasswordResetEmail(
+                user.email,
+                token,
+                user.username
+            );
+            
+            logger.info('Email reset password inviata', {
+                userId: user.id,
+                messageId: emailResult.messageId,
+                previewUrl: emailResult.previewUrl
+            });
+            
+            // Risposta per produzione (senza token)
+            const response = {
+                success: true,
+                message: 'Se l\'email esiste, riceverai le istruzioni per il reset'
+            };
+            
+            // In sviluppo, aggiungi info extra
+            if (process.env.NODE_ENV === 'development') {
+                response.devInfo = {
+                    token: token,
+                    expiresAt: expiresAt,
+                    userId: user.id,
+                    username: user.username,
+                    email: user.email,
+                    previewUrl: emailResult.previewUrl
+                };
+            }
+            
+            res.json(response);
+            
+        } catch (emailError) {
+            logger.error('Errore invio email reset password', {
+                error: emailError.message,
+                userId: user.id
+            });
+            
+            // Fallback: restituisci il token se l'email fallisce (solo in dev)
+            if (process.env.NODE_ENV === 'development') {
+                return res.json({
+                    success: true,
+                    message: 'Email non inviata (errore), ma ecco il token per test',
+                    token: token,
+                    expiresAt: expiresAt,
+                    emailError: emailError.message
+                });
+            }
+            
+            // In produzione, nascondi l'errore email
+            res.json({
+                success: true,
+                message: 'Se l\'email esiste, riceverai le istruzioni per il reset'
+            });
+        }
+
+    } catch (error) {
+        logger.error('Errore durante richiesta reset password', {
+            error: error.message,
+            stack: error.stack,
+            email: req.body.email
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante la richiesta di reset password'
+        });
+    }
+});
+
+// Reset password with token
+app.post('/api/auth/reset-password', [
+    body('token').notEmpty().isLength({ min: 64, max: 64 }),
+    body('newPassword').isLength({ min: 6 }).withMessage('La password deve essere di almeno 6 caratteri')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Dati non validi',
+                errors: errors.array()
+            });
+        }
+
+        const { token, newPassword } = req.body;
+        
+        logger.info('Tentativo reset password con token');
+
+        // Find valid token
+        const [resets] = await db.execute(
+            `SELECT pr.*, u.username, u.email 
+             FROM password_resets pr 
+             JOIN users u ON pr.user_id = u.id 
+             WHERE pr.token = ? AND pr.used = FALSE AND pr.expires_at > NOW()`,
+            [token]
+        );
+
+        if (resets.length === 0) {
+            logger.warn('Token reset password non valido o scaduto', { token: token.substring(0, 10) + '...' });
+            return res.status(400).json({
+                success: false,
+                message: 'Token non valido o scaduto'
+            });
+        }
+
+        const reset = resets[0];
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update user password
+        await db.execute(
+            'UPDATE users SET password = ? WHERE id = ?',
+            [hashedPassword, reset.user_id]
+        );
+
+        // Mark token as used
+        await db.execute(
+            'UPDATE password_resets SET used = TRUE WHERE id = ?',
+            [reset.id]
+        );
+
+        logger.info('Password resettata con successo', { 
+            userId: reset.user_id, 
+            username: reset.username 
+        });
+
+        // Invia email di conferma cambio password
+        // Non bloccare la risposta se l'email fallisce
+        emailService.sendPasswordChangedEmail(reset.email, reset.username)
+            .then(result => {
+                logger.info('Email conferma cambio password inviata', {
+                    userId: reset.user_id,
+                    success: result.success
+                });
+            })
+            .catch(err => {
+                logger.error('Errore invio email conferma', {
+                    error: err.message,
+                    userId: reset.user_id
+                });
+            });
+
+        res.json({
+            success: true,
+            message: 'Password aggiornata con successo',
+            user: {
+                id: reset.user_id,
+                username: reset.username,
+                email: reset.email
+            }
+        });
+
+    } catch (error) {
+        logger.error('Errore durante reset password', {
+            error: error.message,
+            stack: error.stack
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante il reset della password'
+        });
+    }
+});
+
+// ==================== PROFILE ====================
 
 app.get('/api/profile', verifyToken, async (req, res) => {
     try {
@@ -844,13 +1100,13 @@ app.post('/api/expenses', verifyToken, [
         }
 
         const userId = req.user.userId;
-        const { date, amount, category, payment_method, description, receipt_filename } = req.body;
+        const { date, amount, category, payment_method, description, receipt_url } = req.body;
         
         logger.info('Inserimento rimborso', { userId, date, category, amount });
         
         const [result] = await db.execute(
-            'INSERT INTO expense_reimbursement (user_id, date, amount, category, payment_method, description, receipt_filename) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [userId, date, amount, category, payment_method, description, receipt_filename || null]
+            'INSERT INTO expense_reimbursement (user_id, date, amount, category, payment_method, description, receipt_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [userId, date, amount, category, payment_method, description, receipt_url || null]
         );
         
         logger.info('Rimborso inserito con successo', { userId, expenseId: result.insertId });
@@ -866,7 +1122,7 @@ app.post('/api/expenses', verifyToken, [
                 category,
                 payment_method,
                 description,
-                receipt_filename: receipt_filename || null,
+                receipt_url: receipt_url || null,
                 status: 'pending'
             }
         });

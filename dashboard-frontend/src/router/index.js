@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Login from '../views/login.vue';
 import Register from '../views/Register.vue';
+import ResetPassword from '../views/ResetPassword.vue';
 import Dashboard from '../views/dashboard.vue';
 import BustePaga from '../views/BustePaga.vue';
 import Timesheet from '../views/Timesheet.vue';
@@ -21,6 +22,11 @@ const routes = [
       path: '/register', 
       name: 'Register', 
       component: Register 
+    },
+    { 
+      path: '/reset-password', 
+      name: 'ResetPassword', 
+      component: ResetPassword 
     },
     { 
       path: '/dashboard', 

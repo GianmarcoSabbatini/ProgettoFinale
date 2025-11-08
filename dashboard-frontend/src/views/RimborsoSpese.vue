@@ -323,7 +323,7 @@ const loadExpenses = async () => {
         category: expense.category,
         payment: expense.payment_method,
         description: expense.description,
-        receipt: expense.receipt_filename,
+        receipt: expense.receipt_url,
         status: expense.status
       }));
     }
@@ -369,7 +369,7 @@ const addRimborso = async () => {
       category: newRimborso.value.category,
       payment_method: newRimborso.value.payment, // Backend expects payment_method
       description: newRimborso.value.description,
-      receipt_filename: newRimborso.value.receipt || null
+      receipt_url: newRimborso.value.receipt || null
     };
 
     const response = await axios.post(`${API_URL}/api/expenses`, expenseData, {
@@ -387,7 +387,7 @@ const addRimborso = async () => {
       category: expense.category,
       payment: expense.payment_method,
       description: expense.description,
-      receipt: expense.receipt_filename,
+      receipt: expense.receipt_url,
       status: expense.status || 'pending'
     };
 

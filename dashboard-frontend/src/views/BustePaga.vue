@@ -290,13 +290,13 @@
               </div>
             </div>
 
-            <!-- Ore Lavorate -->
+            <!-- Ore Lavorate e Ferie -->
             <div class="detail-section">
               <h3 class="section-title">
                 <i class="fas fa-clock"></i>
                 Ore Lavorate
               </h3>
-              <div class="hours-grid">
+              <div class="hours-inline">
                 <div class="hours-item">
                   <i class="fas fa-business-time"></i>
                   <div>
@@ -311,26 +311,11 @@
                     <span class="hours-value">0 ore</span>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Ferie e Permessi -->
-            <div class="detail-section">
-              <h3 class="section-title">
-                <i class="fas fa-calendar-check"></i>
-                Ferie Maturate
-              </h3>
-              <div class="leave-grid">
-                <div class="leave-card">
-                  <div class="leave-header">
-                    <i class="fas fa-plane"></i>
-                    <span>Ferie</span>
-                  </div>
-                  <div class="leave-stats">
-                    <div class="leave-stat">
-                      <span class="leave-stat-label">Maturate nel mese</span>
-                      <span class="leave-stat-value">{{ calculateVacationDays(selectedBusta?.details?.total_hours) }} gg</span>
-                    </div>
+                <div class="hours-item">
+                  <i class="fas fa-plane"></i>
+                  <div>
+                    <span class="hours-label">Ferie</span>
+                    <span class="hours-value">{{ calculateVacationDays(selectedBusta?.details?.total_hours) }} gg</span>
                   </div>
                 </div>
               </div>
@@ -369,7 +354,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useNotificationStore } from '@/stores/notification';
 import MainHeader from '@/components/MainHeader.vue';
 import QuickActions from '@/components/QuickActions.vue';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import API_URL from '@/config/api';
 
 const notificationStore = useNotificationStore();
@@ -415,7 +400,7 @@ const fetchPayslips = async () => {
               ? JSON.parse(p.salary_details) 
               : p.salary_details;
           } catch (e) {
-            console.error('Errore parsing salary_details:', e);
+            // Errore parsing salary_details - usa valori di default
           }
         }
         
@@ -435,7 +420,6 @@ const fetchPayslips = async () => {
       notificationStore.showNotification('Errore nel caricamento delle buste paga', 'error');
     }
   } catch (error) {
-    console.error('Errore fetch buste paga:', error);
     notificationStore.showNotification('Errore di connessione', 'error');
   }
 };
@@ -501,7 +485,6 @@ const generatePayslip = async () => {
       notificationStore.showNotification(data.message || 'Errore nella generazione', 'error');
     }
   } catch (error) {
-    console.error('Errore generazione busta paga:', error);
     notificationStore.showNotification('Errore di connessione', 'error');
   } finally {
     isGenerating.value = false;
@@ -541,6 +524,10 @@ const downloadBusta = (busta) => {
   const totalHours = details.total_hours || 0;
   const hourlyRate = details.hourly_rate || 0;
   
+  // Converti tutto in stringhe per evitare errori jsPDF
+  const totalHoursStr = String(totalHours);
+  const hourlyRateStr = String(hourlyRate);
+  
   // Crea nuovo documento PDF
   const doc = new jsPDF();
   
@@ -554,20 +541,20 @@ const downloadBusta = (busta) => {
   doc.rect(0, 0, pageWidth, 40, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('CORETEAM DIGITAL', pageWidth / 2, 12, { align: 'center' });
   doc.setFontSize(20);
   doc.text('BUSTA PAGA - CEDOLINO', pageWidth / 2, 22, { align: 'center' });
   doc.setFontSize(11);
-  doc.setFont(undefined, 'normal');
-  doc.text(busta.mese, pageWidth / 2, 32, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.text(String(busta.mese || 'N/A'), pageWidth / 2, 32, { align: 'center' });
   
   y = 55;
   doc.setTextColor(0, 0, 0);
   
   // Sezione Informazioni Generali
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Informazioni Generali', margin, y);
   y += 8;
@@ -578,7 +565,7 @@ const downloadBusta = (busta) => {
   y += 8;
   
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   doc.text(`Periodo di riferimento: ${busta.mese}`, margin, y);
   y += 6;
@@ -595,14 +582,14 @@ const downloadBusta = (busta) => {
   y += 8;
   
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Riepilogo Importi', margin + 5, y);
   y += 8;
   
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text('Retribuzione Lorda:', margin + 5, y);
   doc.text(`€ ${formatCurrency(busta.importoLordo)}`, pageWidth - margin - 5, y, { align: 'right' });
   y += 6;
@@ -616,7 +603,7 @@ const downloadBusta = (busta) => {
   doc.line(margin + 5, y, pageWidth - margin - 5, y);
   y += 6;
   
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(16, 185, 129);
   doc.text('Retribuzione Netta:', margin + 5, y);
@@ -625,7 +612,7 @@ const downloadBusta = (busta) => {
   
   // Sezione Dettaglio Retribuzione
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Dettaglio Retribuzione', margin, y);
   y += 8;
@@ -636,12 +623,12 @@ const downloadBusta = (busta) => {
   
   // Tabella retribuzione
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
   const retribuzioneData = [
     ['Retribuzione oraria', `€ ${formatCurrency(hourlyRate)}/h`],
-    ['Ore lavorate', `${totalHours} ore`],
+    ['Ore lavorate', `${totalHoursStr} ore`],
     ['Totale lordo', `€ ${formatCurrency(busta.importoLordo)}`]
   ];
   
@@ -655,14 +642,14 @@ const downloadBusta = (busta) => {
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
   
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('TOTALE COMPETENZE', margin, y);
   doc.text(`€ ${formatCurrency(busta.importoLordo)}`, pageWidth - margin, y, { align: 'right' });
   y += 12;
   
   // Sezione Detrazioni e Contributi
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Detrazioni e Contributi', margin, y);
   y += 8;
@@ -672,7 +659,7 @@ const downloadBusta = (busta) => {
   y += 8;
   
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
   const detrazioniData = [
@@ -693,7 +680,7 @@ const downloadBusta = (busta) => {
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
   
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('TOTALE DETRAZIONI', margin, y);
   doc.setTextColor(239, 68, 68);
   doc.text(`- € ${formatCurrency(detrazioni)}`, pageWidth - margin, y, { align: 'right' });
@@ -702,7 +689,7 @@ const downloadBusta = (busta) => {
   
   // Sezione Ore Lavorate
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Ore Lavorate', margin, y);
   y += 8;
@@ -712,15 +699,15 @@ const downloadBusta = (busta) => {
   y += 8;
   
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text(`Ore Ordinarie: ${totalHours} ore`, margin, y);
+  doc.text(`Ore Ordinarie: ${totalHoursStr} ore`, margin, y);
   doc.text('Straordinari: 0 ore', margin + 60, y);
   y += 12;
   
   // Sezione Ferie Maturate
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Ferie Maturate', margin, y);
   y += 8;
@@ -730,25 +717,26 @@ const downloadBusta = (busta) => {
   y += 8;
   
   doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
   doc.text('FERIE', margin, y);
   y += 6;
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(`Maturate nel mese: ${calculateVacationDays(totalHours)} gg`, margin + 5, y);
   y += 12;
   
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
-  doc.setFont(undefined, 'italic');
+  doc.setFont('helvetica', 'italic');
   const footerText = 'Documento generato da CoreTeam Digital il ' + new Date().toLocaleString('it-IT');
   doc.text(footerText, pageWidth / 2, y, { align: 'center' });
   y += 5;
   doc.text('Questo documento ha valore informativo. Per certificazioni ufficiali rivolgersi all\'ufficio HR.', pageWidth / 2, y, { align: 'center' });
   
   // Salva il PDF
-  const fileName = `coreteam-busta-paga-${busta.mese.toLowerCase().replace(/\s/g, '-')}.pdf`;
+  const meseStr = String(busta.mese || 'busta-paga');
+  const fileName = `coreteam-busta-paga-${meseStr.toLowerCase().replace(/\s/g, '-')}.pdf`;
   doc.save(fileName);
   
   notificationStore.showNotification(`Busta paga ${busta.mese} scaricata con successo`, 'success');
@@ -1184,7 +1172,7 @@ const filterBustePaga = () => {
   .detail-modal-body { max-height: calc(100vh - 180px); }
   .amounts-grid { grid-template-columns: 1fr; }
   .info-grid { grid-template-columns: 1fr; }
-  .hours-grid { grid-template-columns: 1fr 1fr; }
+  .hours-inline { flex-direction: column; }
 }
 
 @media (max-width: 480px) {
@@ -1195,7 +1183,7 @@ const filterBustePaga = () => {
   .busta-footer { flex-direction: column; }
   .view-btn, .download-btn { width: 100%; }
   
-  .hours-grid { grid-template-columns: 1fr; }
+  .hours-inline { flex-direction: column; }
   .detail-modal-footer { flex-direction: column-reverse; }
   .modal-download-btn, .modal-close-btn { width: 100%; }
 }
@@ -1487,10 +1475,10 @@ const filterBustePaga = () => {
   font-weight: 600;
 }
 
-.hours-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+.hours-inline {
+  display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .hours-item {
@@ -1501,6 +1489,8 @@ const filterBustePaga = () => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
+  min-width: 150px;
   transition: all 0.3s ease;
 }
 

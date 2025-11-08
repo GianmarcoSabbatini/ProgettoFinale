@@ -1,6 +1,26 @@
 <template>
   <div class="login-page-wrapper">
     <div class="login-container">
+      <div class="login-logo">
+        <svg class="logo-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="login-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <!-- Cerchio esterno -->
+          <circle cx="20" cy="20" r="18" fill="none" stroke="url(#login-logo-gradient)" stroke-width="2"/>
+          <!-- Team members (3 nodi interconnessi) -->
+          <circle cx="20" cy="12" r="4" fill="url(#login-logo-gradient)"/>
+          <circle cx="14" cy="24" r="4" fill="url(#login-logo-gradient)"/>
+          <circle cx="26" cy="24" r="4" fill="url(#login-logo-gradient)"/>
+          <!-- Linee di connessione -->
+          <line x1="20" y1="16" x2="16" y2="21" stroke="url(#login-logo-gradient)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="20" y1="16" x2="24" y2="21" stroke="url(#login-logo-gradient)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="24" x2="22" y2="24" stroke="url(#login-logo-gradient)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
       <h1>CoreTeam Digital</h1>
       <p>La tua piattaforma aziendale integrata.</p>
       
@@ -14,7 +34,7 @@
           <input type="password" id="password" v-model="form.password" required>
         </div>
         <div class="forgot-password">
-            <a href="#">Password dimenticata?</a>
+            <router-link to="/reset-password">Password dimenticata?</router-link>
         </div>
         <button type="submit" class="submit-btn">ENTRA NEL PORTALE</button>
       </form>
@@ -104,6 +124,19 @@ const handleLogin = async () => {
     margin: 20px;
     font-family: 'DM Sans', sans-serif;
 }
+
+.login-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo-icon {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.2));
+}
+
 h1 {
     margin: 0 0 10px;
     font-size: 26px;
