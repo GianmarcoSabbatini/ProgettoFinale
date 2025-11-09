@@ -12,7 +12,6 @@ require('dotenv').config();
 const logger = require('./config/logger');
 const { requestLogger, errorLogger } = require('./middleware/logger');
 const { verifyToken } = require('./middleware/auth');
-const emailService = require('./config/email');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -465,63 +464,14 @@ app.post('/api/auth/forgot-password', [
             expiresAt 
         });
 
-        // Invia email con il token
-        try {
-            const emailResult = await emailService.sendPasswordResetEmail(
-                user.email,
-                token,
-                user.username
-            );
-            
-            logger.info('Email reset password inviata', {
-                userId: user.id,
-                messageId: emailResult.messageId,
-                previewUrl: emailResult.previewUrl
-            });
-            
-            // Risposta per produzione (senza token)
-            const response = {
-                success: true,
-                message: 'Se l\'email esiste, riceverai le istruzioni per il reset'
-            };
-            
-            // In sviluppo, aggiungi info extra
-            if (process.env.NODE_ENV === 'development') {
-                response.devInfo = {
-                    token: token,
-                    expiresAt: expiresAt,
-                    userId: user.id,
-                    username: user.username,
-                    email: user.email,
-                    previewUrl: emailResult.previewUrl
-                };
-            }
-            
-            res.json(response);
-            
-        } catch (emailError) {
-            logger.error('Errore invio email reset password', {
-                error: emailError.message,
-                userId: user.id
-            });
-            
-            // Fallback: restituisci il token se l'email fallisce (solo in dev)
-            if (process.env.NODE_ENV === 'development') {
-                return res.json({
-                    success: true,
-                    message: 'Email non inviata (errore), ma ecco il token per test',
-                    token: token,
-                    expiresAt: expiresAt,
-                    emailError: emailError.message
-                });
-            }
-            
-            // In produzione, nascondi l'errore email
-            res.json({
-                success: true,
-                message: 'Se l\'email esiste, riceverai le istruzioni per il reset'
-            });
-        }
+        // Risposta con il token (senza invio email)
+        res.json({
+            success: true,
+            message: 'Token generato con successo. Usa il token per reimpostare la password.',
+            token: token,
+            expiresAt: expiresAt.toISOString(),
+            email: user.email
+        });
 
     } catch (error) {
         logger.error('Errore durante richiesta reset password', {
@@ -594,22 +544,6 @@ app.post('/api/auth/reset-password', [
             userId: reset.user_id, 
             username: reset.username 
         });
-
-        // Invia email di conferma cambio password
-        // Non bloccare la risposta se l'email fallisce
-        emailService.sendPasswordChangedEmail(reset.email, reset.username)
-            .then(result => {
-                logger.info('Email conferma cambio password inviata', {
-                    userId: reset.user_id,
-                    success: result.success
-                });
-            })
-            .catch(err => {
-                logger.error('Errore invio email conferma', {
-                    error: err.message,
-                    userId: reset.user_id
-                });
-            });
 
         res.json({
             success: true,
@@ -1439,6 +1373,156 @@ app.post('/api/payslips/generate', verifyToken, [
         res.status(500).json({
             success: false,
             message: 'Errore durante la generazione della busta paga'
+        });
+    }
+});
+
+// PUT update/recalculate existing payslip
+app.put('/api/payslips/:id/recalculate', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const payslipId = req.params.id;
+        
+        logger.info('Ricalcolo busta paga', { userId, payslipId });
+        
+        // Get existing payslip
+        const [payslips] = await db.execute(
+            'SELECT * FROM payslips WHERE id = ? AND user_id = ?',
+            [payslipId, userId]
+        );
+        
+        if (payslips.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Busta paga non trovata'
+            });
+        }
+        
+        const payslip = payslips[0];
+        const { month, year } = payslip;
+        
+        // Get user profile with hourly rate
+        const [profiles] = await db.execute(
+            'SELECT p.*, CONCAT(p.nome, " ", p.cognome) as full_name, p.hourly_rate FROM profiles p WHERE p.user_id = ?',
+            [userId]
+        );
+        
+        if (profiles.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Profilo utente non trovato'
+            });
+        }
+        
+        const profile = profiles[0];
+        const hourlyRate = parseFloat(profile.hourly_rate) || 15.00;
+        
+        // Get timesheet entries for the specified month/year
+        const monthNum = getMonthNumber(month);
+        
+        logger.debug('Ricalcolo - dati mese', { month, monthNum, year });
+        
+        const [timeEntries] = await db.execute(
+            'SELECT * FROM timesheet WHERE user_id = ? AND MONTH(date) = ? AND YEAR(date) = ?',
+            [userId, monthNum, year]
+        );
+        
+        logger.debug('Ricalcolo - timesheet trovati', { count: timeEntries.length });
+        
+        if (timeEntries.length === 0) {
+            logger.warn('Ricalcolo fallito: nessun timesheet', { userId, month, year, monthNum });
+            return res.status(400).json({
+                success: false,
+                message: 'Nessuna registrazione timesheet trovata per questo periodo'
+            });
+        }
+        
+        // Calculate total hours
+        const totalHours = timeEntries.reduce((sum, entry) => sum + parseFloat(entry.hours), 0);
+        
+        // Calculate gross amount
+        const grossAmount = totalHours * hourlyRate;
+        
+        // Calculate deductions
+        const inpsRate = 0.0919; // 9.19% INPS
+        const inpsAmount = grossAmount * inpsRate;
+        
+        // IRPEF progressive (simplified)
+        let irpefAmount = 0;
+        if (grossAmount <= 15000) {
+            irpefAmount = grossAmount * 0.23;
+        } else if (grossAmount <= 28000) {
+            irpefAmount = 15000 * 0.23 + (grossAmount - 15000) * 0.27;
+        } else if (grossAmount <= 55000) {
+            irpefAmount = 15000 * 0.23 + 13000 * 0.27 + (grossAmount - 28000) * 0.38;
+        } else {
+            irpefAmount = 15000 * 0.23 + 13000 * 0.27 + 27000 * 0.38 + (grossAmount - 55000) * 0.41;
+        }
+        
+        // Calculate net amount
+        const totalDeductions = inpsAmount + irpefAmount;
+        const netAmount = grossAmount - totalDeductions;
+        
+        // Prepare salary details JSON
+        const salaryDetails = {
+            hourly_rate: hourlyRate,
+            total_hours: totalHours,
+            gross_base: grossAmount,
+            deductions: {
+                inps: {
+                    rate: inpsRate,
+                    amount: inpsAmount
+                },
+                irpef: {
+                    amount: irpefAmount
+                }
+            },
+            total_deductions: totalDeductions,
+            net_amount: netAmount,
+            timesheet_entries: timeEntries.length,
+            last_updated: new Date().toISOString()
+        };
+        
+        // Update payslip
+        await db.execute(
+            'UPDATE payslips SET gross_amount = ?, net_amount = ?, salary_details = ? WHERE id = ? AND user_id = ?',
+            [grossAmount.toFixed(2), netAmount.toFixed(2), JSON.stringify(salaryDetails), payslipId, userId]
+        );
+        
+        logger.info('Busta paga ricalcolata con successo', { 
+            userId, 
+            payslipId,
+            totalHours,
+            grossAmount: grossAmount.toFixed(2),
+            netAmount: netAmount.toFixed(2)
+        });
+        
+        res.json({
+            success: true,
+            message: 'Busta paga aggiornata con successo',
+            payslip: {
+                id: payslipId,
+                user_id: userId,
+                month,
+                year,
+                gross_amount: grossAmount.toFixed(2),
+                net_amount: netAmount.toFixed(2),
+                issue_date: payslip.issue_date,
+                issued_by: payslip.issued_by,
+                status: payslip.status,
+                details: salaryDetails
+            }
+        });
+    } catch (error) {
+        logger.error('Errore durante ricalcolo busta paga', {
+            error: error.message,
+            userId: req.user.userId,
+            payslipId: req.params.id
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Errore durante il ricalcolo della busta paga'
         });
     }
 });

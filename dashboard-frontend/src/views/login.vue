@@ -29,9 +29,14 @@
           <label for="email">Indirizzo email</label>
           <input type="email" id="email" v-model="form.email" required>
         </div>
-        <div class="form-group">
+        <div class="form-group password-group">
           <label for="password">Password</label>
-          <input type="password" id="password" v-model="form.password" required>
+          <div class="password-input-wrapper">
+            <input :type="showPassword ? 'text' : 'password'" id="password" v-model="form.password" required>
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
         </div>
         <div class="forgot-password">
             <router-link to="/reset-password">Password dimenticata?</router-link>
@@ -55,10 +60,11 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
+const showPassword = ref(false);
 
 const form = reactive({
   email: 'johndoe@example.com', // Pre-compilato per comodità
@@ -159,6 +165,47 @@ h1 {
     margin-bottom: 8px;
     font-weight: 500;
 }
+
+.password-group {
+    position: relative;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding: 14px 50px 14px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.toggle-password:hover {
+    color: #4B0082;
+}
+
 .form-group input {
     width: 100%;
     padding: 14px;

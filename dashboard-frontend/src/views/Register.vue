@@ -47,16 +47,21 @@
             <span v-if="emailError" class="error-message">{{ emailError }}</span>
           </div>
           
-          <div class="form-group">
+          <div class="form-group password-group">
             <label for="password">Password</label>
-            <input 
-              type="password" 
-              id="password" 
-              v-model="form.password" 
-              @input="validatePassword"
-              :class="{ 'error': passwordError }"
-              required
-            >
+            <div class="password-input-wrapper">
+              <input 
+                :type="showPassword ? 'text' : 'password'" 
+                id="password" 
+                v-model="form.password" 
+                @input="validatePassword"
+                :class="{ 'error': passwordError }"
+                required
+              >
+              <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
             <span v-if="passwordError" class="error-message">{{ passwordError }}</span>
             
             <!-- Indicatori requisiti password -->
@@ -80,16 +85,21 @@
             </div>
           </div>
           
-          <div class="form-group">
+          <div class="form-group password-group">
             <label for="confirmPassword">Conferma password</label>
-            <input 
-              type="password" 
-              id="confirmPassword" 
-              v-model="form.confirmPassword" 
-              @input="validateConfirmPassword"
-              :class="{ 'error': confirmPasswordError }"
-              required
-            >
+            <div class="password-input-wrapper">
+              <input 
+                :type="showConfirmPassword ? 'text' : 'password'" 
+                id="confirmPassword" 
+                v-model="form.confirmPassword" 
+                @input="validateConfirmPassword"
+                :class="{ 'error': confirmPasswordError }"
+                required
+              >
+              <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+                <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
             <span v-if="confirmPasswordError" class="error-message">{{ confirmPasswordError }}</span>
           </div>
         </div>
@@ -195,6 +205,9 @@ const form = reactive({
   team: '',
   avatarColor: getRandomColor() // Colore generato automaticamente
 });
+
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 // Computed per verificare i requisiti password
 const passwordChecks = computed(() => ({
@@ -425,6 +438,41 @@ h1 {
 .form-group {
     margin-bottom: 20px;
     text-align: left;
+}
+
+.password-group {
+    position: relative;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding: 14px 50px 14px 14px !important;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #4B0082;
 }
 
 .form-group label {

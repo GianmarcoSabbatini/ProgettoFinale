@@ -335,6 +335,10 @@
           </div>
 
           <div class="detail-modal-footer">
+            <button @click="ricalcolaBusta(selectedBusta)" class="modal-recalc-btn" :disabled="isRecalculating">
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': isRecalculating }"></i>
+              {{ isRecalculating ? 'Ricalcolo...' : 'Ricalcola' }}
+            </button>
             <button @click="downloadBusta(selectedBusta)" class="modal-download-btn">
               <i class="fas fa-download"></i>
               Scarica PDF
@@ -362,6 +366,7 @@ const selectedYear = ref('all');
 const showDetailModal = ref(false);
 const selectedBusta = ref(null);
 const isGenerating = ref(false);
+const isRecalculating = ref(false);
 const generateForm = ref({
   month: '',
   year: ''
@@ -488,6 +493,71 @@ const generatePayslip = async () => {
     notificationStore.showNotification('Errore di connessione', 'error');
   } finally {
     isGenerating.value = false;
+  }
+};
+
+const ricalcolaBusta = async (busta) => {
+  if (!busta || !busta.id) {
+    notificationStore.showNotification('Errore: busta paga non valida', 'error');
+    return;
+  }
+
+  isRecalculating.value = true;
+
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      notificationStore.showNotification('Sessione scaduta. Effettua il login.', 'error');
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/api/payslips/${busta.id}/recalculate`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    
+    // Log per debug
+    if (import.meta.env.DEV) {
+      console.log('Risposta ricalcolo:', { status: response.status, data });
+    }
+
+    if (!response.ok) {
+      notificationStore.showNotification(
+        data.message || `Errore ${response.status}: ${response.statusText}`,
+        'error'
+      );
+      return;
+    }
+
+    if (data.success) {
+      notificationStore.showNotification(
+        'Busta paga aggiornata con i dati più recenti!',
+        'success'
+      );
+      
+      // Refresh list
+      await fetchPayslips();
+      
+      // Aggiorna la busta selezionata nella modale
+      if (showDetailModal.value && selectedBusta.value?.id === busta.id) {
+        const updatedBusta = bustePaga.value.find(b => b.id === busta.id);
+        if (updatedBusta) {
+          selectedBusta.value = updatedBusta;
+        }
+      }
+    } else {
+      notificationStore.showNotification(data.message || 'Errore durante il ricalcolo', 'error');
+    }
+  } catch (error) {
+    console.error('Errore ricalcolo:', error);
+    notificationStore.showNotification('Errore di connessione', 'error');
+  } finally {
+    isRecalculating.value = false;
   }
 };
 
@@ -1609,7 +1679,8 @@ const filterBustePaga = () => {
 }
 
 .modal-download-btn,
-.modal-close-btn {
+.modal-close-btn,
+.modal-recalc-btn {
   flex: 1;
   padding: 1rem 1.5rem;
   border: none;
@@ -1623,6 +1694,32 @@ const filterBustePaga = () => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+}
+
+.modal-recalc-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.modal-recalc-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.modal-recalc-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-recalc-btn i.fa-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .modal-download-btn {

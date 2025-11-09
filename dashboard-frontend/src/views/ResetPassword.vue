@@ -19,8 +19,8 @@
         </svg>
       </div>
       <h1>Reimposta Password</h1>
-      <p v-if="!step2">Inserisci la tua email per richiedere il reset della password.</p>
-      <p v-else>Inserisci il token ricevuto e la nuova password.</p>
+      <p v-if="!step2">Inserisci la tua email per generare il token di reset.</p>
+      <p v-else>Usa il token generato per impostare la nuova password.</p>
       
       <!-- Step 1: Request token -->
       <form v-if="!step2" @submit.prevent="handleRequestReset">
@@ -41,14 +41,24 @@
           <input type="text" id="token" v-model="form.token" required placeholder="Incolla qui il token ricevuto">
           <small class="hint">Il token è valido per 1 ora</small>
         </div>
-        <div class="form-group">
+        <div class="form-group password-group">
           <label for="newPassword">Nuova password</label>
-          <input type="password" id="newPassword" v-model="form.newPassword" required minlength="6">
+          <div class="password-input-wrapper">
+            <input :type="showPassword ? 'text' : 'password'" id="newPassword" v-model="form.newPassword" required minlength="6">
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
           <small class="hint">Minimo 6 caratteri</small>
         </div>
-        <div class="form-group">
+        <div class="form-group password-group">
           <label for="confirmPassword">Conferma password</label>
-          <input type="password" id="confirmPassword" v-model="form.confirmPassword" required minlength="6">
+          <div class="password-input-wrapper">
+            <input :type="showConfirmPassword ? 'text' : 'password'" id="confirmPassword" v-model="form.confirmPassword" required minlength="6">
+            <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+              <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+            </button>
+          </div>
         </div>
         <button type="submit" class="submit-btn" :disabled="loading">
           <span v-if="!loading">REIMPOSTA PASSWORD</span>
@@ -56,21 +66,6 @@
         </button>
         <button type="button" class="back-btn" @click="goBackToStep1">Torna indietro</button>
       </form>
-
-      <!-- Token display (solo in dev) -->
-      <div v-if="tokenDisplay" class="token-display">
-        <h3>Token generato:</h3>
-        <div class="token-box">
-          <code>{{ tokenDisplay }}</code>
-          <button @click="copyToken" class="copy-btn">
-            <i class="fas fa-copy"></i> Copia
-          </button>
-        </div>
-        <p class="token-info">
-          <i class="fas fa-info-circle"></i> 
-          Scade: {{ tokenExpiry }}
-        </p>
-      </div>
       
       <div class="login-link">
         <p><router-link to="/login">Torna al login</router-link></p>
@@ -98,8 +93,8 @@ const route = useRoute();
 
 const step2 = ref(false);
 const loading = ref(false);
-const tokenDisplay = ref('');
-const tokenExpiry = ref('');
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const form = reactive({
   email: '',
@@ -147,30 +142,17 @@ const handleRequestReset = async () => {
     });
 
     if (response.data.success) {
-      // Controlla se siamo in sviluppo e abbiamo il token
-      if (response.data.devInfo && response.data.devInfo.token) {
-        showSnackbar('Token generato! (Modalità sviluppo)', 'success');
+      // Token sempre disponibile (nessuna email)
+      if (response.data.token) {
+        showSnackbar('Token generato con successo!', 'success');
         
-        tokenDisplay.value = response.data.devInfo.token;
-        form.token = response.data.devInfo.token;
-        
-        if (response.data.devInfo.expiresAt) {
-          const expiryDate = new Date(response.data.devInfo.expiresAt);
-          tokenExpiry.value = expiryDate.toLocaleString('it-IT');
-        }
-        
-        // Mostra URL preview se disponibile (Ethereal)
-        if (response.data.devInfo.previewUrl) {
-          console.log('📧 Preview email:', response.data.devInfo.previewUrl);
-          showSnackbar(`Email inviata! Link preview in console`, 'success');
-        }
+        form.token = response.data.token;
         
         setTimeout(() => {
           step2.value = true;
         }, 1000);
       } else {
-        // Produzione: email inviata
-        showSnackbar('Se l\'email esiste, riceverai le istruzioni per il reset.', 'success');
+        showSnackbar('Token non ricevuto. Riprova.', 'error');
       }
     }
   } catch (error) {
@@ -223,15 +205,9 @@ const handleResetPassword = async () => {
 
 const goBackToStep1 = () => {
   step2.value = false;
-  tokenDisplay.value = '';
   form.token = '';
   form.newPassword = '';
   form.confirmPassword = '';
-};
-
-const copyToken = () => {
-  navigator.clipboard.writeText(tokenDisplay.value);
-  showSnackbar('Token copiato negli appunti!', 'success');
 };
 </script>
 
@@ -282,6 +258,41 @@ p {
 .form-group {
   margin-bottom: 1.5rem;
   text-align: left;
+}
+
+.password-group {
+  position: relative;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding: 0.875rem 3rem 0.875rem 0.875rem !important;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 10;
+}
+
+.toggle-password:hover {
+  color: #6366f1;
 }
 
 .form-group label {
@@ -356,66 +367,6 @@ p {
 
 .back-btn:hover {
   background: #e5e7eb;
-}
-
-.token-display {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-radius: 10px;
-  border: 2px dashed #d1d5db;
-}
-
-.token-display h3 {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  color: #374151;
-}
-
-.token-box {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.token-box code {
-  flex: 1;
-  font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
-  color: #6366f1;
-  word-break: break-all;
-  text-align: left;
-}
-
-.copy-btn {
-  padding: 0.5rem 0.875rem;
-  background: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.copy-btn:hover {
-  background: #4f46e5;
-}
-
-.token-info {
-  margin-top: 0.875rem;
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.token-info i {
-  color: #6366f1;
-  margin-right: 0.375rem;
 }
 
 .login-link {
@@ -508,10 +459,6 @@ p {
 
   h1 {
     font-size: 1.5rem;
-  }
-
-  .token-box code {
-    font-size: 0.7rem;
   }
 }
 </style>

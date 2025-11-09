@@ -6,6 +6,14 @@ export const useHeaderNotificationStore = defineStore('headerNotification', () =
     let notificationIdCounter = 1;
 
     function addNotification(sender, message, type = 'info') {
+        // Validazione sender: evita valori vuoti, null, undefined o "0"
+        if (!sender || sender === '0' || String(sender).trim() === '') {
+            if (import.meta.env.DEV) {
+                console.warn('Tentativo di creare notifica con sender invalido:', sender);
+            }
+            sender = 'Sistema'; // Valore di default
+        }
+        
         const now = new Date();
         const timeString = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
         
