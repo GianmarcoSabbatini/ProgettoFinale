@@ -71,7 +71,7 @@ ProgettoFinale/
 │
 ├── START-SERVERS.bat            # Script avvio automatico
 ├── STOP-SERVERS.bat             # Script stop server
-└── README.md                    # Questo file
+└── README.md                   
 ```
 
 ## 🚀 Installazione e Avvio
