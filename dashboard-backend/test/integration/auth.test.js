@@ -8,13 +8,13 @@ const { expect } = require('chai');
 
 const BASE_URL = 'http://localhost:3001';
 
-describe('Authentication API', function() {
+describe('Authentication API', function () {
   this.timeout(10000); // Timeout 10 secondi per test di integrazione
-  
+
   let authToken;
   let testUser;
 
-  before(function() {
+  before(function () {
     console.log('\n  🔐 Testing Authentication System...\n');
   });
 
@@ -26,22 +26,19 @@ describe('Authentication API', function() {
         email: `test_${timestamp}@example.com`,
         password: 'TestPassword123!',
         nome: 'Test',
-        cognome: 'User'
+        cognome: 'User',
       };
 
-      const res = await request(BASE_URL)
-        .post('/api/register')
-        .send(testUser)
-        .expect(200);
+      const res = await request(BASE_URL).post('/api/register').send(testUser).expect(200);
 
       expect(res.body).to.have.property('success', true);
       expect(res.body).to.have.property('token');
       expect(res.body.token).to.be.a('string');
-      
+
       // Verifica struttura JWT (header.payload.signature)
       const tokenParts = res.body.token.split('.');
       expect(tokenParts).to.have.lengthOf(3);
-      
+
       authToken = res.body.token;
     });
 
@@ -53,7 +50,7 @@ describe('Authentication API', function() {
           email: 'weak@example.com',
           password: 'weak', // Password troppo corta
           nome: 'Weak',
-          cognome: 'Pass'
+          cognome: 'Pass',
         })
         .expect(400);
 
@@ -69,7 +66,7 @@ describe('Authentication API', function() {
           email: 'not-an-email', // Email non valida
           password: 'StrongPass123!',
           nome: 'Invalid',
-          cognome: 'Email'
+          cognome: 'Email',
         })
         .expect(400);
 
@@ -85,7 +82,7 @@ describe('Authentication API', function() {
           email: 'different@example.com',
           password: 'TestPassword123!',
           nome: 'Duplicate',
-          cognome: 'User'
+          cognome: 'User',
         })
         .expect(500); // Il backend restituisce 500 per errori DB
 
@@ -95,16 +92,14 @@ describe('Authentication API', function() {
 
   describe('POST /api/login', () => {
     it('should login with valid credentials', async () => {
-      const res = await request(BASE_URL)
-        .post('/api/login')
-        .send({
-          email: testUser.email,
-          password: testUser.password
-        });
+      const res = await request(BASE_URL).post('/api/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
       // Accept 200 (success) or 429 (rate limit)
       expect([200, 429]).to.include(res.status);
-      
+
       if (res.status === 200) {
         expect(res.body).to.have.property('success', true);
         expect(res.body).to.have.property('token');
@@ -114,12 +109,10 @@ describe('Authentication API', function() {
     });
 
     it('should reject login with wrong password', async () => {
-      const res = await request(BASE_URL)
-        .post('/api/login')
-        .send({
-          email: testUser.email,
-          password: 'WrongPassword123!'
-        });
+      const res = await request(BASE_URL).post('/api/login').send({
+        email: testUser.email,
+        password: 'WrongPassword123!',
+      });
 
       // Accept 400 (bad credentials) or 429 (rate limit)
       expect([400, 429]).to.include(res.status);
@@ -127,12 +120,10 @@ describe('Authentication API', function() {
     });
 
     it('should reject login with non-existent email', async () => {
-      const res = await request(BASE_URL)
-        .post('/api/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'AnyPassword123!'
-        });
+      const res = await request(BASE_URL).post('/api/login').send({
+        email: 'nonexistent@example.com',
+        password: 'AnyPassword123!',
+      });
 
       // Accept 400 (bad credentials) or 429 (rate limit)
       expect([400, 429]).to.include(res.status);
@@ -140,12 +131,10 @@ describe('Authentication API', function() {
     });
 
     it('should reject login with invalid email format', async () => {
-      const res = await request(BASE_URL)
-        .post('/api/login')
-        .send({
-          email: 'not-an-email',
-          password: 'Password123!'
-        });
+      const res = await request(BASE_URL).post('/api/login').send({
+        email: 'not-an-email',
+        password: 'Password123!',
+      });
 
       // Accept either 400 (validation) or 429 (rate limit)
       expect([400, 429]).to.include(res.status);
@@ -166,9 +155,7 @@ describe('Authentication API', function() {
     });
 
     it('should reject access without token', async () => {
-      const res = await request(BASE_URL)
-        .get('/api/messages')
-        .expect(401);
+      const res = await request(BASE_URL).get('/api/messages').expect(401);
 
       expect(res.body).to.have.property('message');
     });

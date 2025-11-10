@@ -10,7 +10,11 @@
     "test:watch": "mocha test/**/*.test.js --timeout 10000 --watch",
     "test:coverage": "nyc --reporter=html --reporter=text mocha test/**/*.test.js --timeout 10000 --exit",
     "test:unit": "mocha test/unit/**/*.test.js --timeout 5000 --exit",
-    "test:integration": "mocha test/integration/**/*.test.js --timeout 10000 --exit"
+    "test:integration": "mocha test/integration/**/*.test.js --timeout 10000 --exit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "axios": "^1.12.2",
@@ -29,8 +33,12 @@
   },
   "devDependencies": {
     "chai": "^6.2.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.4",
     "mocha": "^11.7.4",
     "nyc": "^17.1.0",
+    "prettier": "^3.6.2",
     "sinon": "^21.0.0",
     "supertest": "^7.1.4"
   }

@@ -6,18 +6,13 @@
 const { expect } = require('chai');
 
 describe('Input Validation (Unit Tests)', () => {
-  
   describe('Email Validation', () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    it('should accept valid email addresses', () => {
-      const validEmails = [
-        'user@example.com',
-        'test.user@domain.co.uk',
-        'name+tag@company.org'
-      ];
 
-      validEmails.forEach(email => {
+    it('should accept valid email addresses', () => {
+      const validEmails = ['user@example.com', 'test.user@domain.co.uk', 'name+tag@company.org'];
+
+      validEmails.forEach((email) => {
         expect(emailRegex.test(email)).to.be.true;
       });
     });
@@ -28,10 +23,10 @@ describe('Input Validation (Unit Tests)', () => {
         '@example.com',
         'user@',
         'user @example.com',
-        'user@example'
+        'user@example',
       ];
 
-      invalidEmails.forEach(email => {
+      invalidEmails.forEach((email) => {
         expect(emailRegex.test(email)).to.be.false;
       });
     });
@@ -46,27 +41,23 @@ describe('Input Validation (Unit Tests)', () => {
     };
 
     it('should accept strong passwords', () => {
-      const strongPasswords = [
-        'Password123',
-        'MySecure1Pass',
-        'Test123Password'
-      ];
+      const strongPasswords = ['Password123', 'MySecure1Pass', 'Test123Password'];
 
-      strongPasswords.forEach(password => {
+      strongPasswords.forEach((password) => {
         expect(isPasswordValid(password)).to.be.true;
       });
     });
 
     it('should reject weak passwords', () => {
       const weakPasswords = [
-        'weak',           // Troppo corta
-        'password123',    // Nessuna maiuscola
-        'PASSWORD123',    // Nessuna minuscola
-        'PasswordOnly',   // Nessun numero
-        'Pass1'           // Troppo corta
+        'weak', // Troppo corta
+        'password123', // Nessuna maiuscola
+        'PASSWORD123', // Nessuna minuscola
+        'PasswordOnly', // Nessun numero
+        'Pass1', // Troppo corta
       ];
 
-      weakPasswords.forEach(password => {
+      weakPasswords.forEach((password) => {
         expect(isPasswordValid(password)).to.be.false;
       });
     });
@@ -94,7 +85,9 @@ describe('Input Validation (Unit Tests)', () => {
 
   describe('Username Validation', () => {
     const isUsernameValid = (username) => {
-      if (!username || typeof username !== 'string') return false;
+      if (!username || typeof username !== 'string') {
+        return false;
+      }
       return username.length >= 3 && username.length <= 50;
     };
 
@@ -103,24 +96,24 @@ describe('Input Validation (Unit Tests)', () => {
         'user',
         'test_user',
         'john.doe',
-        'a'.repeat(50) // Max length
+        'a'.repeat(50), // Max length
       ];
 
-      validUsernames.forEach(username => {
+      validUsernames.forEach((username) => {
         expect(isUsernameValid(username)).to.be.true;
       });
     });
 
     it('should reject invalid usernames', () => {
       const invalidUsernames = [
-        'ab',            // Troppo corto
-        'a'.repeat(51),  // Troppo lungo
-        '',              // Vuoto
-        null,            // Null
-        undefined        // Undefined
+        'ab', // Troppo corto
+        'a'.repeat(51), // Troppo lungo
+        '', // Vuoto
+        null, // Null
+        undefined, // Undefined
       ];
 
-      invalidUsernames.forEach(username => {
+      invalidUsernames.forEach((username) => {
         expect(isUsernameValid(username)).to.be.false;
       });
     });
@@ -131,11 +124,11 @@ describe('Input Validation (Unit Tests)', () => {
       "'; DROP TABLE users; --",
       "1' OR '1'='1",
       "admin'--",
-      "' UNION SELECT * FROM users--"
+      "' UNION SELECT * FROM users--",
     ];
 
     it('should detect SQL injection patterns', () => {
-      dangerousPatterns.forEach(pattern => {
+      dangerousPatterns.forEach((pattern) => {
         // Verifica che contenga caratteri pericolosi
         const hasDangerousChars = /'|--|;|\bUNION\b|\bDROP\b/i.test(pattern);
         expect(hasDangerousChars).to.be.true;
@@ -148,11 +141,11 @@ describe('Input Validation (Unit Tests)', () => {
       '<script>alert("xss")</script>',
       '<img src=x onerror=alert(1)>',
       'javascript:alert(1)',
-      '<iframe src="malicious.com"></iframe>'
+      '<iframe src="malicious.com"></iframe>',
     ];
 
     it('should detect XSS patterns', () => {
-      xssPatterns.forEach(pattern => {
+      xssPatterns.forEach((pattern) => {
         const hasHtmlTags = /<[^>]*>/i.test(pattern);
         const hasJavascript = /javascript:/i.test(pattern);
         expect(hasHtmlTags || hasJavascript).to.be.true;

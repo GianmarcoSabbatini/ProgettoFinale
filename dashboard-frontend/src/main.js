@@ -1,9 +1,9 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import axios from 'axios'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import axios from 'axios';
 
-import App from './App.vue'
-import router from './router'
+import App from './App.vue';
+import router from './router';
 
 // Importa Font Awesome globalmente
 import '@fortawesome/fontawesome-free/css/all.css';
@@ -14,8 +14,8 @@ axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 // Interceptor per gestire errori di rete
 axios.interceptors.response.use(
-  response => response,
-  error => {
+  (response) => response,
+  (error) => {
     if (error.code === 'ECONNABORTED') {
       console.error('Timeout della richiesta');
     } else if (!error.response) {
@@ -25,7 +25,7 @@ axios.interceptors.response.use(
   }
 );
 
-const app = createApp(App)
+const app = createApp(App);
 
 // Error Handler Globale
 app.config.errorHandler = (err, instance, info) => {
@@ -37,7 +37,7 @@ app.config.errorHandler = (err, instance, info) => {
   // In produzione potresti inviare a un servizio di tracking errori (es. Sentry)
 };
 
-app.use(createPinia())
-app.use(router)
+app.use(createPinia());
+app.use(router);
 
-app.mount('#app')
+app.mount('#app');

@@ -3,20 +3,45 @@
     <div class="logo">
       <svg class="logo-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
         <!-- Cerchio esterno -->
-        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#gradient1)" stroke-width="2"/>
+        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#gradient1)"
+stroke-width="2" />
         <!-- Tre figure interconnesse (team) -->
-        <circle cx="20" cy="12" r="4" fill="url(#gradient1)"/>
-        <circle cx="14" cy="24" r="4" fill="url(#gradient1)"/>
-        <circle cx="26" cy="24" r="4" fill="url(#gradient1)"/>
+        <circle cx="20" cy="12" r="4" fill="url(#gradient1)" />
+        <circle cx="14" cy="24" r="4" fill="url(#gradient1)" />
+        <circle cx="26" cy="24" r="4" fill="url(#gradient1)" />
         <!-- Linee di connessione -->
-        <line x1="20" y1="16" x2="16" y2="20" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
-        <line x1="20" y1="16" x2="24" y2="20" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
-        <line x1="18" y1="24" x2="22" y2="24" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
+        <line
+          x1="20"
+          y1="16"
+          x2="16"
+          y2="20"
+          stroke="url(#gradient1)"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <line
+          x1="20"
+          y1="16"
+          x2="24"
+          y2="20"
+          stroke="url(#gradient1)"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <line
+          x1="18"
+          y1="24"
+          x2="22"
+          y2="24"
+          stroke="url(#gradient1)"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
         <!-- Gradiente -->
         <defs>
           <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+            <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 1" />
+            <stop offset="100%" style="stop-color: #8b5cf6; stop-opacity: 1" />
           </linearGradient>
         </defs>
       </svg>
@@ -27,24 +52,38 @@
     </nav>
     <div class="header-actions">
       <div class="notification-container">
-        <i @click="toggleNotifications" class="fas fa-bell action-icon" :class="{ 'has-notifications': headerNotificationStore.notifications.length > 0 }"></i>
-        <span v-if="headerNotificationStore.notifications.length > 0" class="notification-badge">{{ headerNotificationStore.notifications.length }}</span>
-        
+        <i
+          class="fas fa-bell action-icon"
+          :class="{ 'has-notifications': headerNotificationStore.notifications.length > 0 }"
+          @click="toggleNotifications"
+        ></i>
+        <span v-if="headerNotificationStore.notifications.length > 0" class="notification-badge">{{
+          headerNotificationStore.notifications.length
+        }}</span>
+
         <!-- Dropdown Notifiche -->
         <transition name="dropdown">
           <div v-if="showNotifications" class="notifications-dropdown">
             <div class="notifications-header">
               <h3>Notifiche</h3>
-              <button @click="headerNotificationStore.clearAllNotifications()" class="clear-all-btn">Cancella tutto</button>
+              <button
+                class="clear-all-btn"
+                @click="headerNotificationStore.clearAllNotifications()"
+              >
+                Cancella tutto
+              </button>
             </div>
             <div class="notifications-list">
-              <div v-if="headerNotificationStore.notifications.length === 0" class="no-notifications">
+              <div
+                v-if="headerNotificationStore.notifications.length === 0"
+                class="no-notifications"
+              >
                 <i class="fas fa-inbox"></i>
                 <p>Nessuna notifica</p>
               </div>
-              <div 
-                v-for="notification in headerNotificationStore.notifications" 
-                :key="notification.id" 
+              <div
+                v-for="notification in headerNotificationStore.notifications"
+                :key="notification.id"
                 class="notification-item"
                 :class="'notification-' + notification.type"
               >
@@ -56,7 +95,10 @@
                   <div class="notification-message">{{ notification.message }}</div>
                   <div class="notification-time">{{ notification.time }}</div>
                 </div>
-                <button @click="headerNotificationStore.removeNotification(notification.id)" class="remove-notification">
+                <button
+                  class="remove-notification"
+                  @click="headerNotificationStore.removeNotification(notification.id)"
+                >
                   <i class="fas fa-times"></i>
                 </button>
               </div>
@@ -64,8 +106,8 @@
           </div>
         </transition>
       </div>
-      <button @click="openLogoutModal" class="logout-button" title="Logout">
-          <i class="fas fa-sign-out-alt action-icon"></i>
+      <button class="logout-button" title="Logout" @click="openLogoutModal">
+        <i class="fas fa-sign-out-alt action-icon"></i>
       </button>
     </div>
 
@@ -79,10 +121,10 @@
           <h3 class="logout-modal-title">Conferma Logout</h3>
           <p class="logout-modal-text">Sei sicuro di voler uscire dal tuo account?</p>
           <div class="logout-modal-actions">
-            <button @click="cancelLogout" class="cancel-logout-modal-btn">
+            <button class="cancel-logout-modal-btn" @click="cancelLogout">
               <i class="fas fa-times"></i> Annulla
             </button>
-            <button @click="confirmLogout" class="confirm-logout-btn">
+            <button class="confirm-logout-btn" @click="confirmLogout">
               <i class="fas fa-sign-out-alt"></i> Esci
             </button>
           </div>
@@ -108,11 +150,15 @@ const toggleNotifications = () => {
 };
 
 const getNotificationIcon = (type) => {
-  switch(type) {
-    case 'success': return 'fas fa-check-circle';
-    case 'warning': return 'fas fa-exclamation-triangle';
-    case 'message': return 'fas fa-envelope';
-    default: return 'fas fa-info-circle';
+  switch (type) {
+    case 'success':
+      return 'fas fa-check-circle';
+    case 'warning':
+      return 'fas fa-exclamation-triangle';
+    case 'message':
+      return 'fas fa-envelope';
+    default:
+      return 'fas fa-info-circle';
   }
 };
 
@@ -141,12 +187,12 @@ const confirmLogout = () => {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
 }
-.logo { 
-  display: flex; 
-  align-items: center; 
-  gap: 0.75rem; 
-  font-size: 1.5rem; 
-  font-weight: bold; 
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 .logo-icon {
   width: 36px;
@@ -161,9 +207,19 @@ const confirmLogout = () => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.main-nav { margin: 0 auto; display: flex; gap: 1.5rem; }
+.main-nav {
+  margin: 0 auto;
+  display: flex;
+  gap: 1.5rem;
+}
 
-.header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: #777; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 1.2rem;
+  color: #777;
+}
 
 /* Sistema Notifiche */
 .notification-container {
@@ -184,9 +240,18 @@ const confirmLogout = () => {
 }
 
 @keyframes bellRing {
-  0%, 100% { transform: rotate(0deg); }
-  10%, 30% { transform: rotate(-10deg); }
-  20%, 40% { transform: rotate(10deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10%,
+  30% {
+    transform: rotate(-10deg);
+  }
+  20%,
+  40% {
+    transform: rotate(10deg);
+  }
 }
 
 .notification-badge {
@@ -376,13 +441,13 @@ const confirmLogout = () => {
 .action-icon:hover {
   background-color: #e8e6ff;
 }
-.logout-button { 
-  background: none; 
-  border: none; 
-  cursor: pointer; 
-  color: #777; 
-  font-size: 1.2rem; 
-  padding: 0; 
+.logout-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #777;
+  font-size: 1.2rem;
+  padding: 0;
 }
 
 /* Logout Modal */
@@ -495,43 +560,123 @@ const confirmLogout = () => {
 }
 
 @media (max-width: 1024px) {
-  .main-header { padding: 0.75rem 1.5rem; }
-  .logo { font-size: 1.3rem; }
-  .logo-icon { width: 32px; height: 32px; }
-  .logo-text { font-size: 1.15rem; }
+  .main-header {
+    padding: 0.75rem 1.5rem;
+  }
+  .logo {
+    font-size: 1.3rem;
+  }
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .logo-text {
+    font-size: 1.15rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .main-header { padding: 0.75rem 1rem; }
-  .logo { font-size: 1.2rem; gap: 0.5rem; }
-  .logo-icon { width: 28px; height: 28px; }
-  .logo-text { font-size: 1.05rem; }
-  .main-nav { display: flex; }
-  .header-actions { gap: 1rem; font-size: 1.1rem; }
-  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }
-  .notifications-header { padding: 0.85rem 1rem; }
-  .notifications-header h3 { font-size: 1rem; }
-  .notification-item { padding: 0.85rem 1rem; }
-  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }
-  .notification-sender { font-size: 0.85rem; }
-  .notification-message { font-size: 0.8rem; }
-  .notification-time { font-size: 0.7rem; }
-  .logout-modal-content { padding: 1.5rem; max-width: 90%; }
-  .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }
-  .logout-modal-title { font-size: 1.3rem; }
-  .logout-modal-text { font-size: 0.9rem; }
-  .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }
+  .main-header {
+    padding: 0.75rem 1rem;
+  }
+  .logo {
+    font-size: 1.2rem;
+    gap: 0.5rem;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .logo-text {
+    font-size: 1.05rem;
+  }
+  .main-nav {
+    display: flex;
+  }
+  .header-actions {
+    gap: 1rem;
+    font-size: 1.1rem;
+  }
+  .notifications-dropdown {
+    width: 320px;
+    max-height: 400px;
+    right: -10px;
+  }
+  .notifications-header {
+    padding: 0.85rem 1rem;
+  }
+  .notifications-header h3 {
+    font-size: 1rem;
+  }
+  .notification-item {
+    padding: 0.85rem 1rem;
+  }
+  .notification-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  .notification-sender {
+    font-size: 0.85rem;
+  }
+  .notification-message {
+    font-size: 0.8rem;
+  }
+  .notification-time {
+    font-size: 0.7rem;
+  }
+  .logout-modal-content {
+    padding: 1.5rem;
+    max-width: 90%;
+  }
+  .logout-modal-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 1.8rem;
+  }
+  .logout-modal-title {
+    font-size: 1.3rem;
+  }
+  .logout-modal-text {
+    font-size: 0.9rem;
+  }
+  .cancel-logout-modal-btn,
+  .confirm-logout-btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
-  .main-header { padding: 0.75rem; }
-  .logo { font-size: 1.1rem; gap: 0.4rem; }
-  .logo-icon { width: 24px; height: 24px; }
-  .logo-text { font-size: 0.95rem; }
-  .header-actions { gap: 0.75rem; font-size: 1rem; }
-  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }
-  .logout-modal-actions { flex-direction: column; gap: 0.5rem; }
-  .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }
+  .main-header {
+    padding: 0.75rem;
+  }
+  .logo {
+    font-size: 1.1rem;
+    gap: 0.4rem;
+  }
+  .logo-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .logo-text {
+    font-size: 0.95rem;
+  }
+  .header-actions {
+    gap: 0.75rem;
+    font-size: 1rem;
+  }
+  .notifications-dropdown {
+    width: calc(100vw - 20px);
+    right: -5px;
+  }
+  .logout-modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .cancel-logout-modal-btn,
+  .confirm-logout-btn {
+    width: 100%;
+  }
 }
 </style>
-

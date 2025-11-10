@@ -1,26 +1,21 @@
 <template>
   <div class="timesheet-page">
     <MainHeader />
-    
+
     <!-- Quick Actions (same as dashboard) -->
-    <QuickActions activePage="timesheet" />
+    <QuickActions active-page="timesheet" />
 
     <!-- Main Content -->
     <main class="timesheet-content">
       <!-- Timesheet Form -->
       <div class="timesheet-form-section">
         <h2><i class="fas fa-plus-circle"></i> Inserisci Ore Lavorate</h2>
-        <form @submit.prevent="addTimesheetEntry" class="timesheet-form">
+        <form class="timesheet-form" @submit.prevent="addTimesheetEntry">
           <div class="form-row">
             <div class="form-group">
               <label for="date">Data</label>
-              <input 
-                type="date" 
-                id="date" 
-                v-model="newEntry.date" 
-                required
-                :max="today"
-              >
+              <input id="date" v-model="newEntry.date" type="date"
+required :max="today" />
             </div>
             <div class="form-group">
               <label for="project">Progetto</label>
@@ -40,16 +35,16 @@
           <div class="form-row">
             <div class="form-group">
               <label for="hours">Ore</label>
-              <input 
-                type="number" 
-                id="hours" 
-                v-model.number="newEntry.hours" 
-                min="0.5" 
-                max="24" 
-                step="0.5" 
+              <input
+                id="hours"
+                v-model.number="newEntry.hours"
+                type="number"
+                min="0.5"
+                max="24"
+                step="0.5"
                 required
                 placeholder="Es. 8"
-              >
+              />
             </div>
             <div class="form-group">
               <label for="type">Tipo Attività</label>
@@ -67,9 +62,9 @@
 
           <div class="form-group full-width">
             <label for="description">Descrizione</label>
-            <textarea 
-              id="description" 
-              v-model="newEntry.description" 
+            <textarea
+              id="description"
+              v-model="newEntry.description"
               rows="3"
               placeholder="Descrivi brevemente l'attività svolta..."
               required
@@ -135,11 +130,7 @@
           </div>
 
           <!-- Grouped by day -->
-          <div 
-            v-for="dayGroup in groupedEntries" 
-            :key="dayGroup.date" 
-            class="day-group"
-          >
+          <div v-for="dayGroup in groupedEntries" :key="dayGroup.date" class="day-group">
             <div class="day-header">
               <div class="day-date">
                 <i class="fas fa-calendar"></i>
@@ -148,28 +139,27 @@
               <div class="day-total">
                 <i class="fas fa-clock"></i>
                 <strong>{{ dayGroup.regularHours }} / 8 ore</strong>
-                <span 
-                  v-if="dayGroup.overtimeHours > 0"
-                  class="overtime-badge"
-                >
+                <span v-if="dayGroup.overtimeHours > 0" class="overtime-badge">
                   + {{ dayGroup.overtimeHours }} straordinario
                 </span>
-                <span 
-                  class="hours-badge" 
-                  :class="dayGroup.regularHours === 8 ? 'complete' : (dayGroup.regularHours > 0 ? 'incomplete' : 'empty')"
+                <span
+                  class="hours-badge"
+                  :class="
+                    dayGroup.regularHours === 8
+                      ? 'complete'
+                      : dayGroup.regularHours > 0
+                        ? 'incomplete'
+                        : 'empty'
+                  "
                 >
                   {{ dayGroup.regularHours === 8 ? '✓ Completo' : '⚠ Incompleto' }}
                 </span>
               </div>
             </div>
-            
+
             <!-- Activities for this day -->
             <div class="day-activities">
-              <div 
-                v-for="entry in dayGroup.entries" 
-                :key="entry.id" 
-                class="activity-card"
-              >
+              <div v-for="entry in dayGroup.entries" :key="entry.id" class="activity-card">
                 <div class="activity-header">
                   <div class="activity-project">
                     <span class="project-badge">{{ entry.project }}</span>
@@ -182,7 +172,7 @@
                   </div>
                 </div>
                 <p class="activity-description">{{ entry.description }}</p>
-                <button @click="openDeleteModal(entry.id)" class="delete-activity-btn">
+                <button class="delete-activity-btn" @click="openDeleteModal(entry.id)">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
@@ -195,8 +185,19 @@
 
   <!-- Snackbar per notifiche -->
   <transition name="snackbar">
-    <div v-if="notificationStore.notification.show" :class="['snackbar', notificationStore.notification.type]">
-      <i :class="notificationStore.notification.type === 'success' ? 'fas fa-check-circle' : notificationStore.notification.type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-exclamation-circle'"></i>
+    <div
+      v-if="notificationStore.notification.show"
+      :class="['snackbar', notificationStore.notification.type]"
+    >
+      <i
+        :class="
+          notificationStore.notification.type === 'success'
+            ? 'fas fa-check-circle'
+            : notificationStore.notification.type === 'warning'
+              ? 'fas fa-exclamation-triangle'
+              : 'fas fa-exclamation-circle'
+        "
+      ></i>
       <span>{{ notificationStore.notification.message }}</span>
     </div>
   </transition>
@@ -209,12 +210,15 @@
           <i class="fas fa-trash-alt"></i>
         </div>
         <h3 class="delete-modal-title">Conferma Eliminazione</h3>
-        <p class="delete-modal-text">Sei sicuro di voler eliminare questa registrazione? Questa azione non può essere annullata.</p>
+        <p class="delete-modal-text">
+          Sei sicuro di voler eliminare questa registrazione? Questa azione non può essere
+          annullata.
+        </p>
         <div class="delete-modal-actions">
-          <button @click="cancelDelete" class="cancel-delete-btn">
+          <button class="cancel-delete-btn" @click="cancelDelete">
             <i class="fas fa-times"></i> Annulla
           </button>
-          <button @click="confirmDelete" class="confirm-delete-btn">
+          <button class="confirm-delete-btn" @click="confirmDelete">
             <i class="fas fa-trash-alt"></i> Elimina
           </button>
         </div>
@@ -244,7 +248,7 @@ const newEntry = ref({
   project: '',
   hours: null,
   type: '',
-  description: ''
+  description: '',
 });
 
 // Voci del timesheet
@@ -279,15 +283,15 @@ const loadTimesheetEntries = async () => {
     loading.value = true;
     const response = await axios.get(`${API_URL}/api/timesheet`, {
       headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
-    
+
     if (response.data.success) {
       // Converti ore in numero per evitare concatenazione stringa
-      timesheetEntries.value = response.data.entries.map(entry => ({
+      timesheetEntries.value = response.data.entries.map((entry) => ({
         ...entry,
-        hours: parseFloat(entry.hours)
+        hours: parseFloat(entry.hours),
       }));
     }
   } catch (error) {
@@ -307,40 +311,50 @@ const selectedWeek = ref('current');
 
 // Aggiungi nuova voce
 const addTimesheetEntry = async () => {
-  if (!newEntry.value.date || !newEntry.value.project || !newEntry.value.hours || !newEntry.value.type || !newEntry.value.description) {
+  if (
+    !newEntry.value.date ||
+    !newEntry.value.project ||
+    !newEntry.value.hours ||
+    !newEntry.value.type ||
+    !newEntry.value.description
+  ) {
     notificationStore.showNotification('Compila tutti i campi obbligatori', 'warning');
     return;
   }
 
   try {
     loading.value = true;
-    const response = await axios.post(`${API_URL}/api/timesheet`, {
-      date: newEntry.value.date,
-      project: newEntry.value.project,
-      hours: parseFloat(newEntry.value.hours),
-      type: newEntry.value.type,
-      description: newEntry.value.description
-    }, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
+    const response = await axios.post(
+      `${API_URL}/api/timesheet`,
+      {
+        date: newEntry.value.date,
+        project: newEntry.value.project,
+        hours: parseFloat(newEntry.value.hours),
+        type: newEntry.value.type,
+        description: newEntry.value.description,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
       }
-    });
+    );
 
     if (response.data.success) {
       // Aggiungi alla lista locale con ore come numero
       const newEntryData = {
         ...response.data.entry,
-        hours: parseFloat(response.data.entry.hours)
+        hours: parseFloat(response.data.entry.hours),
       };
       timesheetEntries.value.unshift(newEntryData);
-      
+
       // Resetta form
       newEntry.value = {
         date: today,
         project: '',
         hours: null,
         type: '',
-        description: ''
+        description: '',
       };
 
       // Mostra notifiche
@@ -366,14 +380,14 @@ const deleteEntry = async (id) => {
     loading.value = true;
     const response = await axios.delete(`${API_URL}/api/timesheet/${id}`, {
       headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
 
     if (response.data.success) {
-      timesheetEntries.value = timesheetEntries.value.filter(entry => entry.id !== id);
+      timesheetEntries.value = timesheetEntries.value.filter((entry) => entry.id !== id);
       notificationStore.showNotification('Registrazione eliminata', 'success');
-      
+
       // Aggiungi notifica nella campanella
       headerNotificationStore.addNotification(
         'Sistema',
@@ -383,7 +397,7 @@ const deleteEntry = async (id) => {
     }
   } catch (error) {
     console.error('Errore eliminazione timesheet:', error);
-    const message = error.response?.data?.message || 'Errore durante l\'eliminazione';
+    const message = error.response?.data?.message || "Errore durante l'eliminazione";
     notificationStore.showNotification(message, 'error');
   } finally {
     loading.value = false;
@@ -397,7 +411,7 @@ const filteredEntries = computed(() => {
   }
 
   const now = new Date();
-  const entries = timesheetEntries.value.filter(entry => {
+  const entries = timesheetEntries.value.filter((entry) => {
     const entryDate = new Date(entry.date);
     const diffDays = Math.floor((now - entryDate) / (1000 * 60 * 60 * 24));
 
@@ -415,35 +429,35 @@ const filteredEntries = computed(() => {
 // Raggruppa voci per data (più recenti prima)
 const groupedEntries = computed(() => {
   const groups = {};
-  
+
   // Raggruppa per data (normalizza formato data)
-  filteredEntries.value.forEach(entry => {
+  filteredEntries.value.forEach((entry) => {
     // Normalizza data in formato YYYY-MM-DD per assicurare il raggruppamento funzioni
     const dateKey = entry.date.split('T')[0]; // Rimuovi ora se presente
-    
+
     if (!groups[dateKey]) {
       groups[dateKey] = [];
     }
     groups[dateKey].push(entry);
   });
-  
+
   // Converti in array e ordina per data (più recenti prima)
   const groupedArray = Object.keys(groups)
     .sort((a, b) => new Date(b) - new Date(a))
-    .map(date => {
+    .map((date) => {
       const totalHours = groups[date].reduce((sum, entry) => sum + parseFloat(entry.hours || 0), 0);
       const regularHours = Math.min(totalHours, 8);
       const overtimeHours = Math.max(totalHours - 8, 0);
-      
+
       return {
         date,
         entries: groups[date],
         totalHours: parseFloat(totalHours.toFixed(2)),
         regularHours: parseFloat(regularHours.toFixed(2)),
-        overtimeHours: parseFloat(overtimeHours.toFixed(2))
+        overtimeHours: parseFloat(overtimeHours.toFixed(2)),
       };
     });
-  
+
   return groupedArray;
 });
 
@@ -454,12 +468,12 @@ const totalHours = computed(() => {
 });
 
 const uniqueDays = computed(() => {
-  const dates = [...new Set(filteredEntries.value.map(entry => entry.date))];
+  const dates = [...new Set(filteredEntries.value.map((entry) => entry.date))];
   return dates.length;
 });
 
 const uniqueProjects = computed(() => {
-  const projects = [...new Set(filteredEntries.value.map(entry => entry.project))];
+  const projects = [...new Set(filteredEntries.value.map((entry) => entry.project))];
   return projects.length;
 });
 
@@ -801,7 +815,8 @@ const filterByWeek = () => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 2px 4px rgba(238, 90, 36, 0.3);
   }
   50% {
@@ -941,25 +956,55 @@ const filterByWeek = () => {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .timesheet-content { padding: 1.5rem; grid-template-columns: 1fr; }
-  .timesheet-form-section { position: static; }
-  .summary-cards { grid-template-columns: repeat(3, 1fr); }
+  .timesheet-content {
+    padding: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+  .timesheet-form-section {
+    position: static;
+  }
+  .summary-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .timesheet-content { padding: 1rem; }
-  .timesheet-form-section { padding: 1.5rem; }
-  .timesheet-entries-section { padding: 1.5rem; }
-  .form-row { grid-template-columns: 1fr; }
-  .summary-cards { grid-template-columns: 1fr; }
-  .entries-header { flex-direction: column; align-items: flex-start; }
+  .timesheet-content {
+    padding: 1rem;
+  }
+  .timesheet-form-section {
+    padding: 1.5rem;
+  }
+  .timesheet-entries-section {
+    padding: 1.5rem;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  .entries-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
-  .timesheet-content { padding: 0.75rem; }
-  .timesheet-form-section { padding: 1rem; }
-  .timesheet-entries-section { padding: 1rem; }
-  .entry-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .timesheet-content {
+    padding: 0.75rem;
+  }
+  .timesheet-form-section {
+    padding: 1rem;
+  }
+  .timesheet-entries-section {
+    padding: 1rem;
+  }
+  .entry-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 
 /* Snackbar Styles */
@@ -976,7 +1021,9 @@ const filterByWeek = () => {
   gap: 12px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   backdrop-filter: blur(10px);
 }

@@ -2,9 +2,9 @@
   <div class="buste-paga-page">
     <!-- Main Header (sempre visibile) -->
     <MainHeader />
-    
+
     <!-- Quick Actions (same as dashboard) -->
-    <QuickActions activePage="buste-paga" />
+    <QuickActions active-page="buste-paga" />
 
     <!-- Main Content -->
     <main class="buste-paga-content">
@@ -47,10 +47,10 @@
                   <option value="2023">2023</option>
                 </select>
               </div>
-              <button 
-                @click="generatePayslip" 
+              <button
                 class="generate-btn"
                 :disabled="!generateForm.month || !generateForm.year || isGenerating"
+                @click="generatePayslip"
               >
                 <i class="fas fa-cog" :class="{ 'fa-spin': isGenerating }"></i>
                 {{ isGenerating ? 'Generazione...' : 'Genera Busta Paga' }}
@@ -83,11 +83,7 @@
 
       <!-- Lista Buste Paga -->
       <div class="buste-paga-grid">
-        <div 
-          v-for="busta in filteredBustePaga" 
-          :key="busta.id" 
-          class="busta-card"
-        >
+        <div v-for="busta in filteredBustePaga" :key="busta.id" class="busta-card">
           <div class="busta-header">
             <div class="busta-icon">
               <i class="fas fa-file-pdf"></i>
@@ -97,7 +93,7 @@
               <p class="busta-year">{{ busta.anno }}</p>
             </div>
           </div>
-          
+
           <div class="busta-details">
             <div class="detail-row">
               <span class="detail-label">Importo Lordo:</span>
@@ -118,16 +114,17 @@
           </div>
 
           <div class="busta-actions">
-            <button @click="downloadBusta(busta)" class="download-btn">
+            <button class="download-btn" @click="downloadBusta(busta)">
               <i class="fas fa-download"></i> Scarica PDF
             </button>
-            <button @click="viewBusta(busta)" class="view-btn">
+            <button class="view-btn" @click="viewBusta(busta)">
               <i class="fas fa-eye"></i> Visualizza
             </button>
           </div>
 
           <div class="busta-status" :class="busta.status">
-            <i class="fas fa-check-circle"></i> {{ busta.status === 'pagato' ? 'Pagato' : 'In elaborazione' }}
+            <i class="fas fa-check-circle"></i>
+            {{ busta.status === 'pagato' ? 'Pagato' : 'In elaborazione' }}
           </div>
         </div>
       </div>
@@ -158,7 +155,7 @@
                 <p class="modal-subtitle">Dettaglio completo busta paga</p>
               </div>
             </div>
-            <button @click="closeDetailModal" class="close-modal-btn">
+            <button class="close-modal-btn" @click="closeDetailModal">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -202,15 +199,21 @@
               <div class="amounts-grid">
                 <div class="amount-card lordo">
                   <span class="amount-label">Retribuzione Lorda</span>
-                  <span class="amount-value">€ {{ formatCurrency(selectedBusta?.importoLordo) }}</span>
+                  <span class="amount-value"
+                    >€ {{ formatCurrency(selectedBusta?.importoLordo) }}</span
+                  >
                 </div>
                 <div class="amount-card detrazioni">
                   <span class="amount-label">Totale Detrazioni</span>
-                  <span class="amount-value">€ {{ formatCurrency(selectedBusta?.details?.total_deductions) }}</span>
+                  <span class="amount-value"
+                    >€ {{ formatCurrency(selectedBusta?.details?.total_deductions) }}</span
+                  >
                 </div>
                 <div class="amount-card netto">
                   <span class="amount-label">Retribuzione Netta</span>
-                  <span class="amount-value">€ {{ formatCurrency(selectedBusta?.importoNetto) }}</span>
+                  <span class="amount-value"
+                    >€ {{ formatCurrency(selectedBusta?.importoNetto) }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -232,23 +235,33 @@
                   <tbody>
                     <tr>
                       <td>Stipendio Base</td>
-                      <td class="text-right">€ {{ formatCurrency(selectedBusta?.importoLordo * 0.75) }}</td>
+                      <td class="text-right">
+                        € {{ formatCurrency(selectedBusta?.importoLordo * 0.75) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Scatti di anzianità</td>
-                      <td class="text-right">€ {{ formatCurrency(selectedBusta?.importoLordo * 0.10) }}</td>
+                      <td class="text-right">
+                        € {{ formatCurrency(selectedBusta?.importoLordo * 0.1) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Indennità varie</td>
-                      <td class="text-right">€ {{ formatCurrency(selectedBusta?.importoLordo * 0.08) }}</td>
+                      <td class="text-right">
+                        € {{ formatCurrency(selectedBusta?.importoLordo * 0.08) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Superminimo</td>
-                      <td class="text-right">€ {{ formatCurrency(selectedBusta?.importoLordo * 0.07) }}</td>
+                      <td class="text-right">
+                        € {{ formatCurrency(selectedBusta?.importoLordo * 0.07) }}
+                      </td>
                     </tr>
                     <tr class="total-row">
                       <td><strong>Totale Competenze</strong></td>
-                      <td class="text-right"><strong>€ {{ formatCurrency(selectedBusta?.importoLordo) }}</strong></td>
+                      <td class="text-right">
+                        <strong>€ {{ formatCurrency(selectedBusta?.importoLordo) }}</strong>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -273,17 +286,28 @@
                   <tbody>
                     <tr>
                       <td>Contributi INPS</td>
-                      <td class="text-center">{{ formatPercentage(selectedBusta?.details?.deductions?.inps?.rate) }}</td>
-                      <td class="text-right text-red">- € {{ formatCurrency(selectedBusta?.details?.deductions?.inps?.amount) }}</td>
+                      <td class="text-center">
+                        {{ formatPercentage(selectedBusta?.details?.deductions?.inps?.rate) }}
+                      </td>
+                      <td class="text-right text-red">
+                        - € {{ formatCurrency(selectedBusta?.details?.deductions?.inps?.amount) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>IRPEF</td>
                       <td class="text-center">-</td>
-                      <td class="text-right text-red">- € {{ formatCurrency(selectedBusta?.details?.deductions?.irpef?.amount) }}</td>
+                      <td class="text-right text-red">
+                        - € {{ formatCurrency(selectedBusta?.details?.deductions?.irpef?.amount) }}
+                      </td>
                     </tr>
                     <tr class="total-row">
                       <td colspan="2"><strong>Totale Detrazioni</strong></td>
-                      <td class="text-right text-red"><strong>- € {{ formatCurrency(selectedBusta?.details?.total_deductions) }}</strong></td>
+                      <td class="text-right text-red">
+                        <strong
+                          >- €
+                          {{ formatCurrency(selectedBusta?.details?.total_deductions) }}</strong
+                        >
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -301,7 +325,9 @@
                   <i class="fas fa-business-time"></i>
                   <div>
                     <span class="hours-label">Ore Ordinarie</span>
-                    <span class="hours-value">{{ selectedBusta?.details?.total_hours || 0 }} ore</span>
+                    <span class="hours-value"
+                      >{{ selectedBusta?.details?.total_hours || 0 }} ore</span
+                    >
                   </div>
                 </div>
                 <div class="hours-item">
@@ -315,7 +341,9 @@
                   <i class="fas fa-plane"></i>
                   <div>
                     <span class="hours-label">Ferie</span>
-                    <span class="hours-value">{{ calculateVacationDays(selectedBusta?.details?.total_hours) }} gg</span>
+                    <span class="hours-value"
+                      >{{ calculateVacationDays(selectedBusta?.details?.total_hours) }} gg</span
+                    >
                   </div>
                 </div>
               </div>
@@ -328,24 +356,32 @@
                 Note e Comunicazioni
               </h3>
               <div class="notes-box">
-                <p><i class="fas fa-info-circle"></i> Per qualsiasi chiarimento contattare l'ufficio Risorse Umane all'indirizzo hr@coreteamdigital.com</p>
-                <p><i class="fas fa-exclamation-triangle"></i> Il 13esima mensilità verrà erogata con la busta paga di dicembre 2025</p>
+                <p>
+                  <i class="fas fa-info-circle"></i> Per qualsiasi chiarimento contattare l'ufficio
+                  Risorse Umane all'indirizzo hr@coreteamdigital.com
+                </p>
+                <p>
+                  <i class="fas fa-exclamation-triangle"></i> Il 13esima mensilità verrà erogata con
+                  la busta paga di dicembre 2025
+                </p>
               </div>
             </div>
           </div>
 
           <div class="detail-modal-footer">
-            <button @click="ricalcolaBusta(selectedBusta)" class="modal-recalc-btn" :disabled="isRecalculating">
+            <button
+              class="modal-recalc-btn"
+              :disabled="isRecalculating"
+              @click="ricalcolaBusta(selectedBusta)"
+            >
               <i class="fas fa-sync-alt" :class="{ 'fa-spin': isRecalculating }"></i>
               {{ isRecalculating ? 'Ricalcolo...' : 'Ricalcola' }}
             </button>
-            <button @click="downloadBusta(selectedBusta)" class="modal-download-btn">
+            <button class="modal-download-btn" @click="downloadBusta(selectedBusta)">
               <i class="fas fa-download"></i>
               Scarica PDF
             </button>
-            <button @click="closeDetailModal" class="modal-close-btn">
-              Chiudi
-            </button>
+            <button class="modal-close-btn" @click="closeDetailModal">Chiudi</button>
           </div>
         </div>
       </div>
@@ -369,7 +405,7 @@ const isGenerating = ref(false);
 const isRecalculating = ref(false);
 const generateForm = ref({
   month: '',
-  year: ''
+  year: '',
 });
 
 // Dati delle buste paga
@@ -387,28 +423,29 @@ const fetchPayslips = async () => {
     const response = await fetch(`${API_URL}/api/payslips`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     const data = await response.json();
-    
+
     if (data.success) {
       // Converti i dati dal backend al formato del frontend
-      bustePaga.value = data.payslips.map(p => {
+      bustePaga.value = data.payslips.map((p) => {
         // Parse salary_details se è una stringa JSON
         let details = {};
         if (p.salary_details) {
           try {
-            details = typeof p.salary_details === 'string' 
-              ? JSON.parse(p.salary_details) 
-              : p.salary_details;
+            details =
+              typeof p.salary_details === 'string'
+                ? JSON.parse(p.salary_details)
+                : p.salary_details;
           } catch (e) {
             // Errore parsing salary_details - usa valori di default
           }
         }
-        
+
         return {
           id: p.id,
           mese: p.month,
@@ -418,7 +455,7 @@ const fetchPayslips = async () => {
           dataEmissione: formatDateFromDB(p.issue_date),
           emessaDa: p.issued_by,
           status: p.status === 'paid' ? 'pagato' : 'in elaborazione',
-          details: details // Aggiungi i dettagli completi
+          details: details, // Aggiungi i dettagli completi
         };
       });
     } else {
@@ -463,13 +500,13 @@ const generatePayslip = async () => {
     const response = await fetch(`${API_URL}/api/payslips/generate`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         month: generateForm.value.month,
-        year: parseInt(generateForm.value.year)
-      })
+        year: parseInt(generateForm.value.year),
+      }),
     });
 
     const data = await response.json();
@@ -479,11 +516,11 @@ const generatePayslip = async () => {
         `Busta paga generata! Importo netto: €${data.payslip.net_amount}`,
         'success'
       );
-      
+
       // Reset form
       generateForm.value.month = '';
       generateForm.value.year = '';
-      
+
       // Refresh list
       await fetchPayslips();
     } else {
@@ -514,13 +551,13 @@ const ricalcolaBusta = async (busta) => {
     const response = await fetch(`${API_URL}/api/payslips/${busta.id}/recalculate`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     const data = await response.json();
-    
+
     // Log per debug
     if (import.meta.env.DEV) {
       console.log('Risposta ricalcolo:', { status: response.status, data });
@@ -539,13 +576,13 @@ const ricalcolaBusta = async (busta) => {
         'Busta paga aggiornata con i dati più recenti!',
         'success'
       );
-      
+
       // Refresh list
       await fetchPayslips();
-      
+
       // Aggiorna la busta selezionata nella modale
       if (showDetailModal.value && selectedBusta.value?.id === busta.id) {
-        const updatedBusta = bustePaga.value.find(b => b.id === busta.id);
+        const updatedBusta = bustePaga.value.find((b) => b.id === busta.id);
         if (updatedBusta) {
           selectedBusta.value = updatedBusta;
         }
@@ -565,7 +602,7 @@ const filteredBustePaga = computed(() => {
   if (selectedYear.value === 'all') {
     return bustePaga.value;
   }
-  return bustePaga.value.filter(busta => busta.anno === parseInt(selectedYear.value));
+  return bustePaga.value.filter((busta) => busta.anno === parseInt(selectedYear.value));
 });
 
 const formatCurrency = (value) => {
@@ -593,19 +630,18 @@ const downloadBusta = (busta) => {
   const irpefAmount = details.deductions?.irpef?.amount || 0;
   const totalHours = details.total_hours || 0;
   const hourlyRate = details.hourly_rate || 0;
-  
+
   // Converti tutto in stringhe per evitare errori jsPDF
   const totalHoursStr = String(totalHours);
-  const hourlyRateStr = String(hourlyRate);
-  
+
   // Crea nuovo documento PDF
   const doc = new jsPDF();
-  
+
   let y = 20;
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
-  const contentWidth = pageWidth - (margin * 2);
-  
+  const contentWidth = pageWidth - margin * 2;
+
   // Header principale con brand
   doc.setFillColor(99, 102, 241);
   doc.rect(0, 0, pageWidth, 40, 'F');
@@ -618,22 +654,22 @@ const downloadBusta = (busta) => {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text(String(busta.mese || 'N/A'), pageWidth / 2, 32, { align: 'center' });
-  
+
   y = 55;
   doc.setTextColor(0, 0, 0);
-  
+
   // Sezione Informazioni Generali
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Informazioni Generali', margin, y);
   y += 8;
-  
+
   doc.setDrawColor(230, 230, 230);
   doc.setLineWidth(0.5);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
@@ -645,98 +681,106 @@ const downloadBusta = (busta) => {
   y += 6;
   doc.text(`Status: ${busta.status === 'pagato' ? 'PAGATO' : 'IN ELABORAZIONE'}`, margin, y);
   y += 12;
-  
+
   // Sezione Riepilogo Importi (evidenziata)
   doc.setFillColor(248, 247, 254);
   doc.roundedRect(margin, y, contentWidth, 35, 3, 3, 'F');
   y += 8;
-  
+
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Riepilogo Importi', margin + 5, y);
   y += 8;
-  
+
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
   doc.text('Retribuzione Lorda:', margin + 5, y);
-  doc.text(`€ ${formatCurrency(busta.importoLordo)}`, pageWidth - margin - 5, y, { align: 'right' });
+  doc.text(`€ ${formatCurrency(busta.importoLordo)}`, pageWidth - margin - 5, y, {
+    align: 'right',
+  });
   y += 6;
-  
+
   doc.text('Totale Detrazioni:', margin + 5, y);
   doc.setTextColor(239, 68, 68);
   doc.text(`- € ${formatCurrency(detrazioni)}`, pageWidth - margin - 5, y, { align: 'right' });
   y += 2;
-  
+
   doc.setDrawColor(150, 150, 150);
   doc.line(margin + 5, y, pageWidth - margin - 5, y);
   y += 6;
-  
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(16, 185, 129);
   doc.text('Retribuzione Netta:', margin + 5, y);
-  doc.text(`€ ${formatCurrency(busta.importoNetto)}`, pageWidth - margin - 5, y, { align: 'right' });
+  doc.text(`€ ${formatCurrency(busta.importoNetto)}`, pageWidth - margin - 5, y, {
+    align: 'right',
+  });
   y += 15;
-  
+
   // Sezione Dettaglio Retribuzione
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Dettaglio Retribuzione', margin, y);
   y += 8;
-  
+
   doc.setDrawColor(230, 230, 230);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
-  
+
   // Tabella retribuzione
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  
+
   const retribuzioneData = [
     ['Retribuzione oraria', `€ ${formatCurrency(hourlyRate)}/h`],
     ['Ore lavorate', `${totalHoursStr} ore`],
-    ['Totale lordo', `€ ${formatCurrency(busta.importoLordo)}`]
+    ['Totale lordo', `€ ${formatCurrency(busta.importoLordo)}`],
   ];
-  
+
   retribuzioneData.forEach(([voce, importo]) => {
     doc.text(voce, margin, y);
     doc.text(importo, pageWidth - margin, y, { align: 'right' });
     y += 6;
   });
-  
+
   doc.setDrawColor(200, 200, 200);
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
-  
+
   doc.setFont('helvetica', 'bold');
   doc.text('TOTALE COMPETENZE', margin, y);
   doc.text(`€ ${formatCurrency(busta.importoLordo)}`, pageWidth - margin, y, { align: 'right' });
   y += 12;
-  
+
   // Sezione Detrazioni e Contributi
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Detrazioni e Contributi', margin, y);
   y += 8;
-  
+
   doc.setDrawColor(230, 230, 230);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  
+
   const detrazioniData = [
-    ['Contributi INPS', formatPercentage(details.deductions?.inps?.rate), `€ ${formatCurrency(inpsAmount)}`],
-    ['IRPEF', '-', `€ ${formatCurrency(irpefAmount)}`]
+    [
+      'Contributi INPS',
+      formatPercentage(details.deductions?.inps?.rate),
+      `€ ${formatCurrency(inpsAmount)}`,
+    ],
+    ['IRPEF', '-', `€ ${formatCurrency(irpefAmount)}`],
   ];
-  
+
   detrazioniData.forEach(([voce, aliquota, importo]) => {
     doc.text(voce, margin, y);
     doc.text(aliquota, pageWidth / 2 - 10, y, { align: 'center' });
@@ -745,47 +789,47 @@ const downloadBusta = (busta) => {
     doc.setTextColor(0, 0, 0);
     y += 6;
   });
-  
+
   doc.setDrawColor(200, 200, 200);
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
-  
+
   doc.setFont('helvetica', 'bold');
   doc.text('TOTALE DETRAZIONI', margin, y);
   doc.setTextColor(239, 68, 68);
   doc.text(`- € ${formatCurrency(detrazioni)}`, pageWidth - margin, y, { align: 'right' });
   doc.setTextColor(0, 0, 0);
   y += 12;
-  
+
   // Sezione Ore Lavorate
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Ore Lavorate', margin, y);
   y += 8;
-  
+
   doc.setDrawColor(230, 230, 230);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   doc.text(`Ore Ordinarie: ${totalHoursStr} ore`, margin, y);
   doc.text('Straordinari: 0 ore', margin + 60, y);
   y += 12;
-  
+
   // Sezione Ferie Maturate
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(99, 102, 241);
   doc.text('Ferie Maturate', margin, y);
   y += 8;
-  
+
   doc.setDrawColor(230, 230, 230);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
-  
+
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
@@ -794,21 +838,27 @@ const downloadBusta = (busta) => {
   doc.setFont('helvetica', 'normal');
   doc.text(`Maturate nel mese: ${calculateVacationDays(totalHours)} gg`, margin + 5, y);
   y += 12;
-  
+
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
   doc.setFont('helvetica', 'italic');
-  const footerText = 'Documento generato da CoreTeam Digital il ' + new Date().toLocaleString('it-IT');
+  const footerText =
+    'Documento generato da CoreTeam Digital il ' + new Date().toLocaleString('it-IT');
   doc.text(footerText, pageWidth / 2, y, { align: 'center' });
   y += 5;
-  doc.text('Questo documento ha valore informativo. Per certificazioni ufficiali rivolgersi all\'ufficio HR.', pageWidth / 2, y, { align: 'center' });
-  
+  doc.text(
+    "Questo documento ha valore informativo. Per certificazioni ufficiali rivolgersi all'ufficio HR.",
+    pageWidth / 2,
+    y,
+    { align: 'center' }
+  );
+
   // Salva il PDF
   const meseStr = String(busta.mese || 'busta-paga');
   const fileName = `coreteam-busta-paga-${meseStr.toLowerCase().replace(/\s/g, '-')}.pdf`;
   doc.save(fileName);
-  
+
   notificationStore.showNotification(`Busta paga ${busta.mese} scaricata con successo`, 'success');
 };
 
@@ -954,8 +1004,12 @@ const filterBustePaga = () => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Filters */
@@ -1217,45 +1271,125 @@ const filterBustePaga = () => {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .buste-paga-content { padding: 1.5rem; }
-  .buste-paga-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-  .detail-modal-content { width: 95%; max-width: none; margin: 1rem; }
+  .buste-paga-content {
+    padding: 1.5rem;
+  }
+  .buste-paga-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .detail-modal-content {
+    width: 95%;
+    max-width: none;
+    margin: 1rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .buste-paga-content { padding: 1rem; }
-  .filters-section { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1.25rem; }
-  .filter-group { width: 100%; }
-  .filter-group select { width: 100%; }
-  .stats-card { justify-content: space-between; width: 100%; }
-  .buste-paga-grid { grid-template-columns: 1fr; gap: 0.75rem; }
-  .busta-header { padding: 1rem; }
-  .busta-title { font-size: 1rem; }
-  .busta-details { padding: 1rem; }
-  .detail-label { font-size: 0.75rem; }
-  .detail-value { font-size: 0.9rem; }
-  .busta-amount { font-size: 1.1rem; }
-  .busta-footer { padding: 1rem; gap: 0.5rem; }
-  .view-btn, .download-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }
-  
-  .detail-modal-content { width: 100%; height: 100vh; border-radius: 0; margin: 0; }
-  .detail-modal-body { max-height: calc(100vh - 180px); }
-  .amounts-grid { grid-template-columns: 1fr; }
-  .info-grid { grid-template-columns: 1fr; }
-  .hours-inline { flex-direction: column; }
+  .buste-paga-content {
+    padding: 1rem;
+  }
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+  .filter-group {
+    width: 100%;
+  }
+  .filter-group select {
+    width: 100%;
+  }
+  .stats-card {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .buste-paga-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .busta-header {
+    padding: 1rem;
+  }
+  .busta-title {
+    font-size: 1rem;
+  }
+  .busta-details {
+    padding: 1rem;
+  }
+  .detail-label {
+    font-size: 0.75rem;
+  }
+  .detail-value {
+    font-size: 0.9rem;
+  }
+  .busta-amount {
+    font-size: 1.1rem;
+  }
+  .busta-footer {
+    padding: 1rem;
+    gap: 0.5rem;
+  }
+  .view-btn,
+  .download-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .detail-modal-content {
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  .detail-modal-body {
+    max-height: calc(100vh - 180px);
+  }
+  .amounts-grid {
+    grid-template-columns: 1fr;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  .hours-inline {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
-  .buste-paga-content { padding: 0.75rem; }
-  .filters-section { padding: 1rem; }
-  .stats-card { flex-direction: column; align-items: stretch; gap: 0.75rem; }
-  .stat-item { justify-content: space-between; }
-  .busta-footer { flex-direction: column; }
-  .view-btn, .download-btn { width: 100%; }
-  
-  .hours-inline { flex-direction: column; }
-  .detail-modal-footer { flex-direction: column-reverse; }
-  .modal-download-btn, .modal-close-btn { width: 100%; }
+  .buste-paga-content {
+    padding: 0.75rem;
+  }
+  .filters-section {
+    padding: 1rem;
+  }
+  .stats-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .stat-item {
+    justify-content: space-between;
+  }
+  .busta-footer {
+    flex-direction: column;
+  }
+  .view-btn,
+  .download-btn {
+    width: 100%;
+  }
+
+  .hours-inline {
+    flex-direction: column;
+  }
+  .detail-modal-footer {
+    flex-direction: column-reverse;
+  }
+  .modal-download-btn,
+  .modal-close-btn {
+    width: 100%;
+  }
 }
 
 /* Modale Dettaglio Completo */
@@ -1718,8 +1852,12 @@ const filterBustePaga = () => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .modal-download-btn {
@@ -1771,4 +1909,3 @@ const filterBustePaga = () => {
   }
 }
 </style>
-

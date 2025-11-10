@@ -7,8 +7,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 body {
-    margin: 0;
-    font-family: 'DM Sans', sans-serif;
-    background-color: #f4f5f7; /* Colore di sfondo generale */
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background-color: #f4f5f7; /* Colore di sfondo generale */
 }
 </style>

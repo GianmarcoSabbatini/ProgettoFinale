@@ -2,22 +2,22 @@
   <div id="app-container">
     <MainHeader />
 
-    <QuickActions activePage="dashboard" />
+    <QuickActions active-page="dashboard" />
 
     <main class="dashboard-content">
       <div class="main-panel">
         <section class="message-board">
           <h2>Ultimi messaggi dalla Bacheca</h2>
-          
+
           <!-- Inline Message Composer -->
           <div class="message-composer">
-            <textarea 
-              v-model="newMessageContent" 
+            <textarea
+              v-model="newMessageContent"
               placeholder="Scrivi un nuovo messaggio per la bacheca..."
               rows="3"
               @keydown.enter.ctrl="publishQuickMessage"
             ></textarea>
-            <button @click="publishQuickMessage" class="send-message-btn">
+            <button class="send-message-btn" @click="publishQuickMessage">
               <i class="fas fa-paper-plane"></i> Invia
             </button>
           </div>
@@ -25,50 +25,48 @@
           <div v-for="message in messages" :key="message.id" class="message-item">
             <div class="message-header-row">
               <div class="message-author">
-                  <div class="avatar" :style="{ backgroundColor: getAvatarColor(message.author) }">
-                    {{ getAuthorInitials(message.author) }}
-                  </div>
-                  <div>
-                      <strong>{{ message.author }}</strong>
-                      <small>{{ formatDate(message.created_at) }}</small>
-                  </div>
+                <div class="avatar" :style="{ backgroundColor: getAvatarColor(message.author) }">
+                  {{ getAuthorInitials(message.author) }}
+                </div>
+                <div>
+                  <strong>{{ message.author }}</strong>
+                  <small>{{ formatDate(message.created_at) }}</small>
+                </div>
               </div>
-              
+
               <!-- Pulsanti modifica/elimina solo per messaggi dell'utente -->
               <div v-if="isUserMessage(message)" class="message-actions">
-                <button 
+                <button
                   v-if="editingMessageId !== message.id"
-                  @click="startEditMessage(message)" 
                   class="action-btn edit-btn-small"
                   title="Modifica messaggio"
+                  @click="startEditMessage(message)"
                 >
                   <i class="fas fa-edit"></i>
                 </button>
-                <button 
-                  @click="deleteMessage(message.id)" 
+                <button
                   class="action-btn delete-btn"
                   title="Elimina messaggio"
+                  @click="deleteMessage(message.id)"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
             </div>
-            
+
             <!-- Modalità visualizzazione -->
-            <p v-if="editingMessageId !== message.id" class="message-content">{{ message.content }}</p>
-            
+            <p v-if="editingMessageId !== message.id" class="message-content">
+              {{ message.content }}
+            </p>
+
             <!-- Modalità editing -->
             <div v-else class="edit-message-form">
-              <textarea 
-                v-model="editingMessageContent" 
-                class="edit-textarea"
-                rows="3"
-              ></textarea>
+              <textarea v-model="editingMessageContent" class="edit-textarea" rows="3"></textarea>
               <div class="edit-actions">
-                <button @click="cancelEdit" class="cancel-edit-btn">
+                <button class="cancel-edit-btn" @click="cancelEdit">
                   <i class="fas fa-times"></i> Annulla
                 </button>
-                <button @click="saveEditMessage(message.id)" class="save-edit-btn">
+                <button class="save-edit-btn" @click="saveEditMessage(message.id)">
                   <i class="fas fa-check"></i> Salva
                 </button>
               </div>
@@ -79,8 +77,8 @@
         <aside class="user-profile">
           <div class="profile-header">
             <h2>Su di te</h2>
-            <button @click="toggleEditMode" class="edit-btn">
-              <i :class="isEditing ? 'fas fa-save' : 'fas fa-edit'"></i> 
+            <button class="edit-btn" @click="toggleEditMode">
+              <i :class="isEditing ? 'fas fa-save' : 'fas fa-edit'"></i>
               <span>{{ isEditing ? 'Salva le modifiche' : 'Modifica' }}</span>
             </button>
           </div>
@@ -89,21 +87,28 @@
           </div>
           <h3 class="user-name">{{ user.nome }} {{ user.cognome }}</h3>
           <p class="user-email">{{ user.email }}</p>
-          
+
           <!-- Divider -->
           <div class="profile-divider"></div>
-          
+
           <!-- Modalità visualizzazione -->
           <div v-if="!isEditing" class="profile-details">
-            <p v-if="user.job_title" class="user-job"><strong>Job Title:</strong> {{ user.job_title }}</p>
+            <p v-if="user.job_title" class="user-job">
+              <strong>Job Title:</strong> {{ user.job_title }}
+            </p>
             <p v-if="user.team" class="user-team"><strong>Team:</strong> {{ user.team }}</p>
           </div>
-          
+
           <!-- Modalità modifica -->
           <div v-else class="edit-form">
             <div class="form-group">
               <label>Job Title:</label>
-              <input v-model="editForm.job_title" type="text" class="form-input" placeholder="Inserisci il tuo ruolo" />
+              <input
+                v-model="editForm.job_title"
+                type="text"
+                class="form-input"
+                placeholder="Inserisci il tuo ruolo"
+              />
             </div>
             <div class="form-group">
               <label>Team:</label>
@@ -122,8 +127,17 @@
 
     <!-- Snackbar globale -->
     <transition name="snackbar">
-      <div v-if="notificationStore.notification.show" :class="['snackbar', notificationStore.notification.type]">
-        <i :class="notificationStore.notification.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+      <div
+        v-if="notificationStore.notification.show"
+        :class="['snackbar', notificationStore.notification.type]"
+      >
+        <i
+          :class="
+            notificationStore.notification.type === 'success'
+              ? 'fas fa-check-circle'
+              : 'fas fa-exclamation-circle'
+          "
+        ></i>
         <span>{{ notificationStore.notification.message }}</span>
       </div>
     </transition>
@@ -136,12 +150,14 @@
             <i class="fas fa-trash-alt"></i>
           </div>
           <h3 class="delete-modal-title">Elimina messaggio</h3>
-          <p class="delete-modal-text">Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata.</p>
+          <p class="delete-modal-text">
+            Sei sicuro di voler eliminare questo messaggio? Questa azione non può essere annullata.
+          </p>
           <div class="delete-modal-actions">
-            <button @click="cancelDelete" class="cancel-delete-modal-btn">
+            <button class="cancel-delete-modal-btn" @click="cancelDelete">
               <i class="fas fa-times"></i> Annulla
             </button>
-            <button @click="confirmDelete" class="confirm-delete-btn">
+            <button class="confirm-delete-btn" @click="confirmDelete">
               <i class="fas fa-trash"></i> Elimina
             </button>
           </div>
@@ -169,7 +185,7 @@ const user = ref({});
 const isEditing = ref(false);
 const editForm = ref({
   job_title: '',
-  team: ''
+  team: '',
 });
 
 // Nuovo messaggio inline
@@ -183,30 +199,37 @@ const publishQuickMessage = async () => {
 
   // Verifica che i dati utente siano caricati
   if (!user.value || !user.value.nome || !user.value.cognome) {
-    notificationStore.showNotification('Errore: dati utente non disponibili. Riprova tra poco.', 'error');
+    notificationStore.showNotification(
+      'Errore: dati utente non disponibili. Riprova tra poco.',
+      'error'
+    );
     return;
   }
 
   try {
     const author = `${user.value.nome} ${user.value.cognome}`;
-    
+
     if (import.meta.env.DEV) {
       console.log('Invio messaggio con dati:', {
         title: 'Messaggio Bacheca',
         content: newMessageContent.value.trim(),
-        author: author
+        author: author,
       });
     }
-    
-    const response = await axios.post(`${API_URL}/api/messages`, {
-      title: 'Messaggio Bacheca',
-      content: newMessageContent.value.trim(),
-      author: author
-    }, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
+
+    const response = await axios.post(
+      `${API_URL}/api/messages`,
+      {
+        title: 'Messaggio Bacheca',
+        content: newMessageContent.value.trim(),
+        author: author,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
       }
-    });
+    );
 
     if (import.meta.env.DEV) {
       console.log('Risposta backend:', response.data);
@@ -215,16 +238,20 @@ const publishQuickMessage = async () => {
     if (response.data.success) {
       // Ricarica i messaggi
       await loadMessages();
-      
+
       // Pulisci la textarea
       newMessageContent.value = '';
-      
+
       // Mostra notifica di successo
       notificationStore.showNotification('Messaggio pubblicato con successo!', 'success');
-      
+
       // Aggiungi notifica nel sistema
       try {
-        headerNotificationStore.addNotification('SISTEMA', 'Il tuo messaggio è stato pubblicato nella bacheca', 'success');
+        headerNotificationStore.addNotification(
+          'SISTEMA',
+          'Il tuo messaggio è stato pubblicato nella bacheca',
+          'success'
+        );
       } catch (notifError) {
         if (import.meta.env.DEV) {
           console.error('Errore aggiunta notifica:', notifError);
@@ -236,15 +263,18 @@ const publishQuickMessage = async () => {
       console.error('Errore pubblicazione messaggio:', error);
       console.error('Dettagli errore:', error.response?.data || error.message);
     }
-    notificationStore.showNotification('Errore nella pubblicazione del messaggio. Riprova.', 'error');
+    notificationStore.showNotification(
+      'Errore nella pubblicazione del messaggio. Riprova.',
+      'error'
+    );
   }
 };
 
 const loadMessages = async () => {
   const messagesResponse = await axios.get(`${API_URL}/api/messages`, {
-      headers: {
-          'Authorization': `Bearer ${authStore.token}`
-      }
+    headers: {
+      Authorization: `Bearer ${authStore.token}`,
+    },
   });
   messages.value = messagesResponse.data.messages || [];
 };
@@ -277,15 +307,19 @@ const saveEditMessage = async (messageId) => {
 
   try {
     const author = `${user.value.nome} ${user.value.cognome}`;
-    
-    const response = await axios.put(`${API_URL}/api/messages/${messageId}`, {
-      content: editingMessageContent.value.trim(),
-      author: author
-    }, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
+
+    const response = await axios.put(
+      `${API_URL}/api/messages/${messageId}`,
+      {
+        content: editingMessageContent.value.trim(),
+        author: author,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
       }
-    });
+    );
 
     if (response.data.success) {
       await loadMessages();
@@ -321,12 +355,12 @@ const confirmDelete = async () => {
 
   try {
     const author = `${user.value.nome} ${user.value.cognome}`;
-    
+
     const response = await axios.delete(`${API_URL}/api/messages/${messageToDelete.value}`, {
       headers: {
-        'Authorization': `Bearer ${authStore.token}`
+        Authorization: `Bearer ${authStore.token}`,
       },
-      data: { author: author }
+      data: { author: author },
     });
 
     if (response.data.success) {
@@ -334,7 +368,11 @@ const confirmDelete = async () => {
       showDeleteModal.value = false;
       messageToDelete.value = null;
       notificationStore.showNotification('Messaggio eliminato con successo!', 'success');
-      headerNotificationStore.addNotification('SISTEMA', 'Hai eliminato un messaggio dalla bacheca', 'info');
+      headerNotificationStore.addNotification(
+        'SISTEMA',
+        'Hai eliminato un messaggio dalla bacheca',
+        'info'
+      );
     }
   } catch (error) {
     if (import.meta.env.DEV) {
@@ -342,7 +380,7 @@ const confirmDelete = async () => {
     }
     showDeleteModal.value = false;
     messageToDelete.value = null;
-    notificationStore.showNotification('Errore nell\'eliminazione del messaggio. Riprova.', 'error');
+    notificationStore.showNotification("Errore nell'eliminazione del messaggio. Riprova.", 'error');
   }
 };
 
@@ -351,68 +389,70 @@ const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
-  
+
   // Formatta l'ora HH:MM
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
-  
+
   // Verifica se è oggi (stesso giorno, mese e anno)
-  const isToday = date.getDate() === now.getDate() &&
-                  date.getMonth() === now.getMonth() &&
-                  date.getFullYear() === now.getFullYear();
-  
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
   if (isToday) {
     return `Oggi alle ${hours}:${minutes}`;
   }
-  
+
   // Verifica se è ieri
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  
-  const isYesterday = date.getDate() === yesterday.getDate() &&
-                      date.getMonth() === yesterday.getMonth() &&
-                      date.getFullYear() === yesterday.getFullYear();
-  
+
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
   if (isYesterday) {
     return `Ieri alle ${hours}:${minutes}`;
   }
-  
+
   // Altrimenti mostra la data completa
   const day = date.getDate().toString().padStart(2, '0');
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
-  
+
   return `Il ${day}/${month}/${year} alle ${hours}:${minutes}`;
 };
 
 // Funzione per ottenere le iniziali
 const getInitials = (nome, cognome) => {
-    if (!nome || !cognome) return '';
-    return (nome.charAt(0) + cognome.charAt(0)).toUpperCase();
+  if (!nome || !cognome) return '';
+  return (nome.charAt(0) + cognome.charAt(0)).toUpperCase();
 };
 
 // Funzione per ottenere le iniziali dall'autore del messaggio
 const getAuthorInitials = (author) => {
   const authorMap = {
-    'SISTEMA': 'SY',
-    'ADMIN': 'AD',
-    'HR': 'HR',
-    'Sistema': 'SY',
-    'Admin': 'AD'
+    SISTEMA: 'SY',
+    ADMIN: 'AD',
+    HR: 'HR',
+    Sistema: 'SY',
+    Admin: 'AD',
   };
-  
+
   // Se è un autore speciale, usa la mappa
   if (authorMap[author]) {
     return authorMap[author];
   }
-  
+
   // Altrimenti, estrai iniziali da nome e cognome
   const parts = author.split(' ');
   if (parts.length >= 2) {
     // Prendi prima lettera del nome e prima lettera del cognome
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
-  
+
   // Se è una singola parola, prendi le prime 2 lettere
   return author.substring(0, 2).toUpperCase();
 };
@@ -420,16 +460,16 @@ const getAuthorInitials = (author) => {
 // Funzione per ottenere il colore avatar basato sull'autore
 const getAvatarColor = (author) => {
   const colorMap = {
-    'SISTEMA': '#6366f1',    // Indaco (sistema tecnico)
-    'Sistema': '#6366f1',
-    'ADMIN': '#ef4444',      // Rosso (amministrativo)
-    'Admin': '#ef4444',
-    'HR': '#10b981',         // Verde (risorse umane)
-    'Hr': '#10b981',
-    'Pietro Rossi': '#f59e0b',  // Arancione
-    'Flora Morelli': '#ec4899'  // Rosa
+    SISTEMA: '#6366f1', // Indaco (sistema tecnico)
+    Sistema: '#6366f1',
+    ADMIN: '#ef4444', // Rosso (amministrativo)
+    Admin: '#ef4444',
+    HR: '#10b981', // Verde (risorse umane)
+    Hr: '#10b981',
+    'Pietro Rossi': '#f59e0b', // Arancione
+    'Flora Morelli': '#ec4899', // Rosa
   };
-  
+
   return colorMap[author] || '#8b5cf6'; // Viola di default
 };
 
@@ -447,26 +487,34 @@ const toggleEditMode = async () => {
 
 const saveProfile = async () => {
   try {
-    const response = await axios.put(`${API_URL}/api/profile`, {
-      job_title: editForm.value.job_title,
-      team: editForm.value.team
-    }, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
+    const response = await axios.put(
+      `${API_URL}/api/profile`,
+      {
+        job_title: editForm.value.job_title,
+        team: editForm.value.team,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
       }
-    });
-    
+    );
+
     if (response.data.success) {
       // Aggiorna i dati locali
       user.value.job_title = editForm.value.job_title;
       user.value.team = editForm.value.team;
       isEditing.value = false;
-      
+
       // Mostra notifica di successo
       notificationStore.showNotification('Profilo aggiornato con successo!', 'success');
-      
+
       // Aggiungi notifica nel sistema
-      headerNotificationStore.addNotification('SISTEMA', 'Il tuo profilo è stato aggiornato con successo', 'success');
+      headerNotificationStore.addNotification(
+        'SISTEMA',
+        'Il tuo profilo è stato aggiornato con successo',
+        'success'
+      );
     }
   } catch (error) {
     if (import.meta.env.DEV) {
@@ -476,39 +524,23 @@ const saveProfile = async () => {
   }
 };
 
-// Logout con modale di conferma
-const showLogoutModal = ref(false);
-
-const openLogoutModal = () => {
-  showLogoutModal.value = true;
-};
-
-const cancelLogout = () => {
-  showLogoutModal.value = false;
-};
-
-const confirmLogout = () => {
-  showLogoutModal.value = false;
-  authStore.logout();
-};
-
 onMounted(async () => {
   try {
     await loadMessages();
-    
+
     if (import.meta.env.DEV) {
       console.log('Messaggi ricevuti:', messages.value);
     }
 
     const profileResponse = await axios.get(`${API_URL}/api/profile`, {
-        headers: {
-            'Authorization': `Bearer ${authStore.token}`
-        }
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
     user.value = profileResponse.data.profile;
   } catch (error) {
     if (import.meta.env.DEV) {
-      console.error("Errore nel caricamento dei dati:", error);
+      console.error('Errore nel caricamento dei dati:', error);
     }
   }
 });
@@ -529,12 +561,12 @@ onMounted(async () => {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
 }
-.logo { 
-  display: flex; 
-  align-items: center; 
-  gap: 0.75rem; 
-  font-size: 1.5rem; 
-  font-weight: bold; 
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 .logo-icon {
   width: 36px;
@@ -549,10 +581,26 @@ onMounted(async () => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.main-nav { margin: 0 auto; display: flex; gap: 1.5rem; }
-.nav-link { text-decoration: none; color: #777; font-weight: 500; }
-.nav-link.active { color: #333; }
-.header-actions { display: flex; align-items: center; gap: 1.5rem; font-size: 1.2rem; color: #777; }
+.main-nav {
+  margin: 0 auto;
+  display: flex;
+  gap: 1.5rem;
+}
+.nav-link {
+  text-decoration: none;
+  color: #777;
+  font-weight: 500;
+}
+.nav-link.active {
+  color: #333;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 1.2rem;
+  color: #777;
+}
 
 /* Sistema Notifiche */
 .notification-container {
@@ -573,9 +621,18 @@ onMounted(async () => {
 }
 
 @keyframes bellRing {
-  0%, 100% { transform: rotate(0deg); }
-  10%, 30% { transform: rotate(-10deg); }
-  20%, 40% { transform: rotate(10deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  10%,
+  30% {
+    transform: rotate(-10deg);
+  }
+  20%,
+  40% {
+    transform: rotate(10deg);
+  }
 }
 
 .notification-badge {
@@ -748,7 +805,8 @@ onMounted(async () => {
 }
 
 /* Animazione Dropdown */
-.dropdown-enter-active, .dropdown-leave-active {
+.dropdown-enter-active,
+.dropdown-leave-active {
   transition: all 0.3s ease;
 }
 
@@ -765,32 +823,36 @@ onMounted(async () => {
 .action-icon:hover {
   background-color: #e8e6ff;
 }
-.logout-button { 
-  background: none; 
-  border: none; 
-  cursor: pointer; 
-  color: #777; 
-  font-size: 1.2rem; 
-  padding: 0; 
+.logout-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #777;
+  font-size: 1.2rem;
+  padding: 0;
 }
-.dashboard-content { 
-  padding: 0 2rem 2rem 2rem; 
-  max-width: 1400px; 
-  margin: 0 auto; 
+.dashboard-content {
+  padding: 0 2rem 2rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
-.main-panel { 
-  display: grid; 
-  grid-template-columns: 2fr 1fr; 
-  gap: 2rem; 
+.main-panel {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
   align-items: start;
 }
-h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
-.message-board, .user-profile {
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.message-board,
+.user-profile {
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #e7e7ee;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .message-board h2 {
@@ -802,7 +864,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   border-bottom: 2px solid #f5f5f5;
 }
 
-.message-item { 
+.message-item {
   padding: 1.25rem;
   margin-bottom: 0.75rem;
   background-color: #fafafb;
@@ -817,7 +879,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
 }
 
-.message-item:last-child { 
+.message-item:last-child {
   margin-bottom: 0;
 }
 
@@ -828,10 +890,10 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   margin-bottom: 0.75rem;
 }
 
-.message-author { 
-  display: flex; 
-  align-items: center; 
-  gap: 1rem; 
+.message-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .message-actions {
@@ -927,11 +989,10 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
-
-.avatar { 
-  width: 48px; 
-  height: 48px; 
-  border-radius: 50%; 
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -943,8 +1004,8 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   letter-spacing: 0.5px;
 }
 
-.message-author > div { 
-  display: flex; 
+.message-author > div {
+  display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
@@ -955,8 +1016,8 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   font-weight: 600;
 }
 
-.message-author small { 
-  color: #999; 
+.message-author small {
+  color: #999;
   font-size: 0.8rem;
   font-weight: 400;
 }
@@ -968,9 +1029,9 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   margin: 0.5rem 0 0.4rem 0;
 }
 
-.message-content { 
-  color: #44444f; 
-  line-height: 1.6; 
+.message-content {
+  color: #44444f;
+  line-height: 1.6;
   margin: 0;
   font-size: 0.9rem;
   padding-left: 0;
@@ -987,7 +1048,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   font-weight: bold;
   color: white;
   margin: 0 auto 1rem auto;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .user-name {
@@ -1015,7 +1076,8 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   text-align: left;
 }
 
-.user-job, .user-team {
+.user-job,
+.user-team {
   font-size: 0.9rem;
   color: #333;
   text-align: left;
@@ -1097,7 +1159,7 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 
 .form-input:focus {
   outline: none;
-  border-color: #4ECDC4;
+  border-color: #4ecdc4;
 }
 
 .profile-details .detail-item {
@@ -1113,8 +1175,8 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   border-bottom: none;
 }
 
-.detail-label { 
-  color: #777; 
+.detail-label {
+  color: #777;
   font-size: 0.8rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -1141,7 +1203,9 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
   gap: 12px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   backdrop-filter: blur(10px);
 }
@@ -1484,23 +1548,250 @@ h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 }
 
 @media (max-width: 1024px) {
-  .main-header { padding: 0.75rem 1.5rem; }
-  .logo { font-size: 1.3rem; }
-  .logo-icon { width: 32px; height: 32px; }
-  .logo-text { font-size: 1.15rem; }
-  .main-nav { gap: 1rem; }
-  .nav-link { font-size: 0.9rem; }
-  .dashboard-content { padding: 0 1.5rem 1.5rem 1.5rem; }
+  .main-header {
+    padding: 0.75rem 1.5rem;
+  }
+  .logo {
+    font-size: 1.3rem;
+  }
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .logo-text {
+    font-size: 1.15rem;
+  }
+  .main-nav {
+    gap: 1rem;
+  }
+  .nav-link {
+    font-size: 0.9rem;
+  }
+  .dashboard-content {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .main-header { padding: 0.75rem 1rem; }
-  .logo { font-size: 1.2rem; gap: 0.5rem; }
-  .logo-icon { width: 28px; height: 28px; }
-  .logo-text { font-size: 1.05rem; }
-  .main-nav { display: none; }
-  .header-actions { gap: 1rem; font-size: 1.1rem; }
-  .dashboard-content { padding: 0 1rem 1rem 1rem; }
-  .main-panel { grid-template-columns: 1fr; gap: 1.5rem; }  .message-board, .user-profile { padding: 1.25rem; }  h2 { font-size: 1.1rem; margin-bottom: 1rem; }  .message-composer textarea { font-size: 0.9rem; padding: 0.75rem; }  .send-message-btn { padding: 0.7rem 1.25rem; font-size: 0.85rem; }  .message-item { padding: 1rem; }  .message-author { gap: 0.75rem; }  .avatar { width: 36px; height: 36px; font-size: 0.85rem; }  .message-author strong { font-size: 0.9rem; }  .message-author small { font-size: 0.75rem; }  .message-content { font-size: 0.9rem; line-height: 1.5; }  .message-actions { gap: 0.5rem; }  .action-btn { width: 32px; height: 32px; font-size: 0.85rem; }  .edit-textarea { font-size: 0.9rem; padding: 0.75rem; }  .edit-actions { gap: 0.5rem; }  .cancel-edit-btn, .save-edit-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }  .profile-header h2 { font-size: 1rem; }  .edit-profile-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }  .profile-avatar { width: 70px; height: 70px; font-size: 1.8rem; }  .profile-name { font-size: 1.1rem; }  .profile-role { font-size: 0.85rem; }  .info-item label { font-size: 0.8rem; }  .info-item p { font-size: 0.9rem; }  .notifications-dropdown { width: 320px; max-height: 400px; right: -10px; }  .notifications-header { padding: 0.85rem 1rem; }  .notifications-header h3 { font-size: 1rem; }  .notification-item { padding: 0.85rem 1rem; }  .notification-icon { width: 36px; height: 36px; font-size: 0.9rem; }  .notification-sender { font-size: 0.85rem; }  .notification-message { font-size: 0.8rem; }  .notification-time { font-size: 0.7rem; }  .delete-modal-content, .logout-modal-content { padding: 1.5rem; max-width: 90%; }  .delete-modal-icon, .logout-modal-icon { width: 70px; height: 70px; font-size: 1.8rem; }  .delete-modal-title, .logout-modal-title { font-size: 1.3rem; }  .delete-modal-text, .logout-modal-text { font-size: 0.9rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { padding: 0.65rem 1.25rem; font-size: 0.9rem; }}@media (max-width: 480px) {  .main-header { padding: 0.75rem; }  .logo { font-size: 1.1rem; gap: 0.4rem; }  .logo-icon { width: 24px; height: 24px; }  .logo-text { font-size: 0.95rem; }  .header-actions { gap: 0.75rem; font-size: 1rem; }  .dashboard-content { padding: 0 0.75rem 0.75rem 0.75rem; }  .message-board, .user-profile { padding: 1rem; }  .notifications-dropdown { width: calc(100vw - 20px); right: -5px; }  .message-actions { flex-direction: column; gap: 0.4rem; }  .action-btn { width: 100%; height: 36px; }  .edit-actions { flex-direction: column; }  .cancel-edit-btn, .save-edit-btn { width: 100%; }  .delete-modal-actions, .logout-modal-actions { flex-direction: column; gap: 0.5rem; }  .cancel-delete-btn, .confirm-delete-btn, .cancel-logout-modal-btn, .confirm-logout-btn { width: 100%; }}
+  .main-header {
+    padding: 0.75rem 1rem;
+  }
+  .logo {
+    font-size: 1.2rem;
+    gap: 0.5rem;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .logo-text {
+    font-size: 1.05rem;
+  }
+  .main-nav {
+    display: none;
+  }
+  .header-actions {
+    gap: 1rem;
+    font-size: 1.1rem;
+  }
+  .dashboard-content {
+    padding: 0 1rem 1rem 1rem;
+  }
+  .main-panel {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .message-board,
+  .user-profile {
+    padding: 1.25rem;
+  }
+  h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .message-composer textarea {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+  .send-message-btn {
+    padding: 0.7rem 1.25rem;
+    font-size: 0.85rem;
+  }
+  .message-item {
+    padding: 1rem;
+  }
+  .message-author {
+    gap: 0.75rem;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+  }
+  .message-author strong {
+    font-size: 0.9rem;
+  }
+  .message-author small {
+    font-size: 0.75rem;
+  }
+  .message-content {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .message-actions {
+    gap: 0.5rem;
+  }
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+  .edit-textarea {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+  .edit-actions {
+    gap: 0.5rem;
+  }
+  .cancel-edit-btn,
+  .save-edit-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+  .profile-header h2 {
+    font-size: 1rem;
+  }
+  .edit-profile-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  .profile-avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 1.8rem;
+  }
+  .profile-name {
+    font-size: 1.1rem;
+  }
+  .profile-role {
+    font-size: 0.85rem;
+  }
+  .info-item label {
+    font-size: 0.8rem;
+  }
+  .info-item p {
+    font-size: 0.9rem;
+  }
+  .notifications-dropdown {
+    width: 320px;
+    max-height: 400px;
+    right: -10px;
+  }
+  .notifications-header {
+    padding: 0.85rem 1rem;
+  }
+  .notifications-header h3 {
+    font-size: 1rem;
+  }
+  .notification-item {
+    padding: 0.85rem 1rem;
+  }
+  .notification-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  .notification-sender {
+    font-size: 0.85rem;
+  }
+  .notification-message {
+    font-size: 0.8rem;
+  }
+  .notification-time {
+    font-size: 0.7rem;
+  }
+  .delete-modal-content,
+  .logout-modal-content {
+    padding: 1.5rem;
+    max-width: 90%;
+  }
+  .delete-modal-icon,
+  .logout-modal-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 1.8rem;
+  }
+  .delete-modal-title,
+  .logout-modal-title {
+    font-size: 1.3rem;
+  }
+  .delete-modal-text,
+  .logout-modal-text {
+    font-size: 0.9rem;
+  }
+  .cancel-delete-btn,
+  .confirm-delete-btn,
+  .cancel-logout-modal-btn,
+  .confirm-logout-btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+@media (max-width: 480px) {
+  .main-header {
+    padding: 0.75rem;
+  }
+  .logo {
+    font-size: 1.1rem;
+    gap: 0.4rem;
+  }
+  .logo-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .logo-text {
+    font-size: 0.95rem;
+  }
+  .header-actions {
+    gap: 0.75rem;
+    font-size: 1rem;
+  }
+  .dashboard-content {
+    padding: 0 0.75rem 0.75rem 0.75rem;
+  }
+  .message-board,
+  .user-profile {
+    padding: 1rem;
+  }
+  .notifications-dropdown {
+    width: calc(100vw - 20px);
+    right: -5px;
+  }
+  .message-actions {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .action-btn {
+    width: 100%;
+    height: 36px;
+  }
+  .edit-actions {
+    flex-direction: column;
+  }
+  .cancel-edit-btn,
+  .save-edit-btn {
+    width: 100%;
+  }
+  .delete-modal-actions,
+  .logout-modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .cancel-delete-btn,
+  .confirm-delete-btn,
+  .cancel-logout-modal-btn,
+  .confirm-logout-btn {
+    width: 100%;
+  }
+}
 </style>
-

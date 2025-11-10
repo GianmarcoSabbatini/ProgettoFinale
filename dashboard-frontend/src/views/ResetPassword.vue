@@ -5,28 +5,62 @@
         <svg class="logo-icon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="reset-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+              <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 1" />
+              <stop offset="100%" style="stop-color: #8b5cf6; stop-opacity: 1" />
             </linearGradient>
           </defs>
-          <circle cx="20" cy="20" r="18" fill="none" stroke="url(#reset-logo-gradient)" stroke-width="2"/>
-          <circle cx="20" cy="12" r="4" fill="url(#reset-logo-gradient)"/>
-          <circle cx="14" cy="24" r="4" fill="url(#reset-logo-gradient)"/>
-          <circle cx="26" cy="24" r="4" fill="url(#reset-logo-gradient)"/>
-          <line x1="20" y1="16" x2="16" y2="21" stroke="url(#reset-logo-gradient)" stroke-width="2" stroke-linecap="round"/>
-          <line x1="20" y1="16" x2="24" y2="21" stroke="url(#reset-logo-gradient)" stroke-width="2" stroke-linecap="round"/>
-          <line x1="18" y1="24" x2="22" y2="24" stroke="url(#reset-logo-gradient)" stroke-width="2" stroke-linecap="round"/>
+          <circle
+            cx="20"
+            cy="20"
+            r="18"
+            fill="none"
+            stroke="url(#reset-logo-gradient)"
+            stroke-width="2"
+          />
+          <circle cx="20" cy="12" r="4" fill="url(#reset-logo-gradient)" />
+          <circle cx="14" cy="24" r="4" fill="url(#reset-logo-gradient)" />
+          <circle cx="26" cy="24" r="4" fill="url(#reset-logo-gradient)" />
+          <line
+            x1="20"
+            y1="16"
+            x2="16"
+            y2="21"
+            stroke="url(#reset-logo-gradient)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <line
+            x1="20"
+            y1="16"
+            x2="24"
+            y2="21"
+            stroke="url(#reset-logo-gradient)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <line
+            x1="18"
+            y1="24"
+            x2="22"
+            y2="24"
+            stroke="url(#reset-logo-gradient)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
       </div>
       <h1>Reimposta Password</h1>
       <p v-if="!step2">Inserisci la tua email per generare il token di reset.</p>
       <p v-else>Usa il token generato per impostare la nuova password.</p>
-      
+
       <!-- Step 1: Request token -->
       <form v-if="!step2" @submit.prevent="handleRequestReset">
         <div class="form-group">
           <label for="email">Indirizzo email</label>
-          <input type="email" id="email" v-model="form.email" required>
+          <input
+id="email"
+v-model="form.email" type="email"
+required />
         </div>
         <button type="submit" class="submit-btn" :disabled="loading">
           <span v-if="!loading">RICHIEDI TOKEN</span>
@@ -38,13 +72,25 @@
       <form v-else @submit.prevent="handleResetPassword">
         <div class="form-group">
           <label for="token">Token di reset</label>
-          <input type="text" id="token" v-model="form.token" required placeholder="Incolla qui il token ricevuto">
+          <input
+            id="token"
+            v-model="form.token"
+            type="text"
+            required
+            placeholder="Incolla qui il token ricevuto"
+          />
           <small class="hint">Il token è valido per 1 ora</small>
         </div>
         <div class="form-group password-group">
           <label for="newPassword">Nuova password</label>
           <div class="password-input-wrapper">
-            <input :type="showPassword ? 'text' : 'password'" id="newPassword" v-model="form.newPassword" required minlength="6">
+            <input
+              id="newPassword"
+              v-model="form.newPassword"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              minlength="6"
+            />
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -54,8 +100,18 @@
         <div class="form-group password-group">
           <label for="confirmPassword">Conferma password</label>
           <div class="password-input-wrapper">
-            <input :type="showConfirmPassword ? 'text' : 'password'" id="confirmPassword" v-model="form.confirmPassword" required minlength="6">
-            <button type="button" class="toggle-password" @click="showConfirmPassword = !showConfirmPassword">
+            <input
+              id="confirmPassword"
+              v-model="form.confirmPassword"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              required
+              minlength="6"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              @click="showConfirmPassword = !showConfirmPassword"
+            >
               <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
           </div>
@@ -66,7 +122,7 @@
         </button>
         <button type="button" class="back-btn" @click="goBackToStep1">Torna indietro</button>
       </form>
-      
+
       <div class="login-link">
         <p><router-link to="/login">Torna al login</router-link></p>
       </div>
@@ -75,7 +131,9 @@
     <!-- Snackbar -->
     <transition name="snackbar">
       <div v-if="snackbar.show" :class="['snackbar', snackbar.type]">
-        <i :class="snackbar.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+        <i
+          :class="snackbar.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"
+        ></i>
         <span>{{ snackbar.message }}</span>
       </div>
     </transition>
@@ -100,7 +158,7 @@ const form = reactive({
   email: '',
   token: '',
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 });
 
 // Controlla se c'è un token nell'URL
@@ -115,14 +173,14 @@ onMounted(() => {
 const snackbar = reactive({
   show: false,
   message: '',
-  type: 'error'
+  type: 'error',
 });
 
 const showSnackbar = (message, type = 'error') => {
   snackbar.message = message;
   snackbar.type = type;
   snackbar.show = true;
-  
+
   setTimeout(() => {
     snackbar.show = false;
   }, 5000);
@@ -135,19 +193,19 @@ const handleRequestReset = async () => {
   }
 
   loading.value = true;
-  
+
   try {
     const response = await axios.post(`${API_URL}/api/auth/forgot-password`, {
-      email: form.email
+      email: form.email,
     });
 
     if (response.data.success) {
       // Token sempre disponibile (nessuna email)
       if (response.data.token) {
         showSnackbar('Token generato con successo!', 'success');
-        
+
         form.token = response.data.token;
-        
+
         setTimeout(() => {
           step2.value = true;
         }, 1000);
@@ -180,23 +238,24 @@ const handleResetPassword = async () => {
   }
 
   loading.value = true;
-  
+
   try {
     const response = await axios.post(`${API_URL}/api/auth/reset-password`, {
       token: form.token,
-      newPassword: form.newPassword
+      newPassword: form.newPassword,
     });
 
     if (response.data.success) {
       showSnackbar('Password aggiornata con successo! Ora puoi effettuare il login.', 'success');
-      
+
       // Reindirizza al login dopo 2 secondi
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Errore durante il reset. Verifica il token.';
+    const errorMessage =
+      error.response?.data?.message || 'Errore durante il reset. Verifica il token.';
     showSnackbar(errorMessage, 'error');
   } finally {
     loading.value = false;
@@ -437,7 +496,8 @@ p {
   font-weight: 500;
 }
 
-.snackbar-enter-active, .snackbar-leave-active {
+.snackbar-enter-active,
+.snackbar-leave-active {
   transition: all 0.3s ease;
 }
 

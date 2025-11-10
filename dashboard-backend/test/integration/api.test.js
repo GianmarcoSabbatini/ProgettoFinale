@@ -8,16 +8,16 @@ const { expect } = require('chai');
 
 const BASE_URL = 'http://localhost:3001';
 
-describe('API Endpoints', function() {
+describe('API Endpoints', function () {
   this.timeout(10000);
-  
+
   let authToken;
   let testMessageId;
-  let testUserId;
+  let _testUserId; // Prefix with _ to indicate intentionally unused
 
-  before(async function() {
+  before(async function () {
     console.log('\n  📡 Testing API Endpoints...\n');
-    
+
     // Crea un utente di test e ottieni il token
     const timestamp = Date.now();
     const res = await request(BASE_URL)
@@ -27,12 +27,12 @@ describe('API Endpoints', function() {
         email: `apitest_${timestamp}@example.com`,
         password: 'ApiTest123!',
         nome: 'API',
-        cognome: 'Test'
+        cognome: 'Test',
       });
 
     if (res.body.token) {
       authToken = res.body.token;
-      testUserId = res.body.user.id;
+      _testUserId = res.body.user.id;
     }
   });
 
@@ -54,9 +54,7 @@ describe('API Endpoints', function() {
     });
 
     it('should require authentication', async () => {
-      const res = await request(BASE_URL)
-        .get('/api/messages')
-        .expect(401);
+      const res = await request(BASE_URL).get('/api/messages').expect(401);
 
       expect(res.body).to.have.property('message');
     });
@@ -72,7 +70,7 @@ describe('API Endpoints', function() {
       const messageData = {
         title: 'Test Message',
         content: 'This is a test message content',
-        author: 'API Test'
+        author: 'API Test',
       };
 
       const res = await request(BASE_URL)
@@ -83,12 +81,12 @@ describe('API Endpoints', function() {
 
       expect(res.body).to.have.property('success', true);
       expect(res.body).to.have.property('message');
-      
+
       // Get the message ID from the messages list
       const messagesRes = await request(BASE_URL)
         .get('/api/messages')
         .set('Authorization', `Bearer ${authToken}`);
-      
+
       testMessageId = messagesRes.body.messages[0]?.id;
     });
 
@@ -98,7 +96,7 @@ describe('API Endpoints', function() {
         .send({
           title: 'Unauthorized',
           content: 'Should fail',
-          author: 'Hacker'
+          author: 'Hacker',
         })
         .expect(401);
 
@@ -117,7 +115,7 @@ describe('API Endpoints', function() {
         .send({
           title: '', // Vuoto
           content: 'Content',
-          author: 'Test'
+          author: 'Test',
         })
         .expect(400);
 
@@ -136,7 +134,7 @@ describe('API Endpoints', function() {
         .send({
           title: 'Title',
           content: '', // Vuoto
-          author: 'Test'
+          author: 'Test',
         })
         .expect(400);
 
@@ -152,7 +150,7 @@ describe('API Endpoints', function() {
 
       const updatedData = {
         content: 'Updated content',
-        author: 'API Test' // Must match original author
+        author: 'API Test', // Must match original author
       };
 
       const res = await request(BASE_URL)
@@ -173,7 +171,7 @@ describe('API Endpoints', function() {
         .put(`/api/messages/${testMessageId}`)
         .send({
           content: 'Should fail',
-          author: 'API Test'
+          author: 'API Test',
         })
         .expect(401);
 
@@ -189,7 +187,7 @@ describe('API Endpoints', function() {
         .put(`/api/messages/${testMessageId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          content: 'Missing author field'
+          content: 'Missing author field',
         })
         .expect(400);
 

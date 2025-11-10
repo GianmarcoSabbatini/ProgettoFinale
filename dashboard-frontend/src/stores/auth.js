@@ -7,106 +7,109 @@ import { useHeaderNotificationStore } from './headerNotification';
 import API_URL from '@/config/api';
 
 export const useAuthStore = defineStore('auth', () => {
-    // Inizializza il token dal localStorage per mantenere il login
-    const token = ref(localStorage.getItem('token'));
-    const router = useRouter();
+  // Inizializza il token dal localStorage per mantenere il login
+  const token = ref(localStorage.getItem('token'));
+  const router = useRouter();
 
-    // Una proprietà "computed" per sapere se l'utente è autenticato
-    const isAuthenticated = computed(() => !!token.value);
+  // Una proprietà "computed" per sapere se l'utente è autenticato
+  const isAuthenticated = computed(() => !!token.value);
 
-    function setToken(newToken) {
-        localStorage.setItem('token', newToken);
-        token.value = newToken;
+  function setToken(newToken) {
+    localStorage.setItem('token', newToken);
+    token.value = newToken;
+  }
+
+  function clearToken() {
+    localStorage.removeItem('token');
+    token.value = null;
+  }
+
+  async function login(email, password) {
+    const headerNotificationStore = useHeaderNotificationStore();
+
+    try {
+      const response = await axios.post(`${API_URL}/api/login`, { email, password });
+      if (response.data.success) {
+        setToken(response.data.token);
+
+        // Aggiungi notifica di benvenuto
+        setTimeout(() => {
+          headerNotificationStore.addNotification(
+            'SISTEMA',
+            'Benvenuto nella dashboard aziendale!',
+            'info'
+          );
+        }, 200);
+
+        // Usa il router per reindirizzare alla dashboard
+        router.push({ name: 'Dashboard' });
+      }
+    } catch (error) {
+      // Rimosso console.error per produzione
+      if (import.meta.env.DEV) {
+        console.error('Errore di login:', error.response?.data?.message || error.message);
+      }
+      // Rilancia l'errore per permettere al componente di gestirlo con la snackbar
+      throw error;
     }
+  }
 
-    function clearToken() {
-        localStorage.removeItem('token');
-        token.value = null;
+  async function register(username, email, password, nome, cognome, jobTitle, team, avatar) {
+    const notificationStore = useNotificationStore();
+    const headerNotificationStore = useHeaderNotificationStore();
+
+    try {
+      const registrationData = {
+        username,
+        email,
+        password,
+        nome,
+        cognome,
+        jobTitle,
+        team,
+        avatar,
+      };
+
+      const response = await axios.post(`${API_URL}/api/register`, registrationData);
+      if (response.data.success) {
+        setToken(response.data.token);
+
+        // Naviga alla dashboard e mostra notifica di successo
+        router.push({ name: 'Dashboard' });
+
+        // Mostra la notifica dopo un piccolo delay per dare tempo al componente di montarsi
+        setTimeout(() => {
+          notificationStore.showNotification(
+            'Registrazione completata con successo! Benvenuto nella dashboard.',
+            'success'
+          );
+          headerNotificationStore.addNotification(
+            'SISTEMA',
+            'Benvenuto nella dashboard aziendale!',
+            'success'
+          );
+          headerNotificationStore.addNotification(
+            'HR',
+            'Ricordati di completare il tuo profilo con Job Title e Team',
+            'warning'
+          );
+        }, 200);
+      }
+    } catch (error) {
+      // Rimosso console.error per produzione
+      if (import.meta.env.DEV) {
+        console.error('Errore di registrazione:', error.response?.data?.message || error.message);
+      }
+      // Rilancia l'errore in modo che possa essere gestito dal componente
+      throw error;
     }
+  }
 
-    async function login(email, password) {
-        const headerNotificationStore = useHeaderNotificationStore();
-        
-        try {
-            const response = await axios.post(`${API_URL}/api/login`, { email, password });
-            if (response.data.success) {
-                setToken(response.data.token);
-                
-                // Aggiungi notifica di benvenuto
-                setTimeout(() => {
-                    headerNotificationStore.addNotification(
-                        'SISTEMA', 
-                        'Benvenuto nella dashboard aziendale!', 
-                        'info'
-                    );
-                }, 200);
-                
-                // Usa il router per reindirizzare alla dashboard
-                router.push({ name: 'Dashboard' }); 
-            }
-        } catch (error) {
-            // Rimosso console.error per produzione
-            if (import.meta.env.DEV) {
-                console.error('Errore di login:', error.response?.data?.message || error.message);
-            }
-            // Rilancia l'errore per permettere al componente di gestirlo con la snackbar
-            throw error;
-        }
-    }
+  function logout() {
+    clearToken();
+    // Usa il router per reindirizzare al login
+    router.push({ name: 'Login' });
+  }
 
-    async function register(username, email, password, nome, cognome, jobTitle, team, avatar) {
-        const notificationStore = useNotificationStore();
-        const headerNotificationStore = useHeaderNotificationStore();
-        
-        try {
-            const registrationData = { 
-                username, 
-                email, 
-                password,
-                nome,
-                cognome,
-                jobTitle,
-                team,
-                avatar
-            };
-            
-            const response = await axios.post(`${API_URL}/api/register`, registrationData);
-            if (response.data.success) {
-                setToken(response.data.token);
-                
-                // Naviga alla dashboard e mostra notifica di successo
-                router.push({ name: 'Dashboard' });
-                
-                // Mostra la notifica dopo un piccolo delay per dare tempo al componente di montarsi
-                setTimeout(() => {
-                    notificationStore.showNotification('Registrazione completata con successo! Benvenuto nella dashboard.', 'success');
-                    headerNotificationStore.addNotification(
-                        'SISTEMA', 
-                        'Benvenuto nella dashboard aziendale!', 
-                        'success'
-                    );
-                    headerNotificationStore.addNotification(
-                        'HR', 
-                        'Ricordati di completare il tuo profilo con Job Title e Team', 
-                        'warning'
-                    );
-                }, 200);
-            }
-        } catch (error) {
-            // Rimosso console.error per produzione
-            if (import.meta.env.DEV) {
-                console.error('Errore di registrazione:', error.response?.data?.message || error.message);
-            }
-            // Rilancia l'errore in modo che possa essere gestito dal componente
-            throw error;
-        }
-    }
-
-    function logout() {
-        clearToken();
-        // Usa il router per reindirizzare al login
-        router.push({ name: 'Login' });
-    }
-
-    return { token, isAuthenticated, login, register, logout };
+  return { token, isAuthenticated, login, register, logout };
 });

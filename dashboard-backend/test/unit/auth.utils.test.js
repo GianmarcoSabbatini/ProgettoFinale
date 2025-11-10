@@ -4,7 +4,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 describe('Authentication Utils - Unit Tests with Sinon', () => {
-  
   describe('Password Hashing with bcrypt (Stubbed)', () => {
     let bcryptHashStub;
     let bcryptCompareStub;
@@ -24,7 +23,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
     it('should hash a password using bcrypt.hash', async () => {
       const password = 'TestPassword123';
       const hashedPassword = '$2b$10$mockHashedPassword';
-      
+
       bcryptHashStub.resolves(hashedPassword);
 
       const result = await bcrypt.hash(password, 10);
@@ -37,7 +36,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
     it('should compare password with hash using bcrypt.compare', async () => {
       const password = 'TestPassword123';
       const hash = '$2b$10$mockHashedPassword';
-      
+
       bcryptCompareStub.resolves(true);
 
       const result = await bcrypt.compare(password, hash);
@@ -50,7 +49,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
     it('should return false when password does not match hash', async () => {
       const password = 'WrongPassword';
       const hash = '$2b$10$mockHashedPassword';
-      
+
       bcryptCompareStub.resolves(false);
 
       const result = await bcrypt.compare(password, hash);
@@ -62,7 +61,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
     it('should handle bcrypt.hash errors', async () => {
       const password = 'TestPassword123';
       const error = new Error('Hashing failed');
-      
+
       bcryptHashStub.rejects(error);
 
       try {
@@ -95,7 +94,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
       const payload = { userId: 1, email: 'test@example.com' };
       const secret = 'test-secret';
       const mockToken = 'mock.jwt.token';
-      
+
       jwtSignStub.returns(mockToken);
 
       const token = jwt.sign(payload, secret, { expiresIn: '24h' });
@@ -109,7 +108,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
       const token = 'mock.jwt.token';
       const secret = 'test-secret';
       const decodedPayload = { userId: 1, email: 'test@example.com' };
-      
+
       jwtVerifyStub.returns(decodedPayload);
 
       const result = jwt.verify(token, secret);
@@ -123,7 +122,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
       const token = 'invalid.jwt.token';
       const secret = 'test-secret';
       const error = new Error('Invalid token');
-      
+
       jwtVerifyStub.throws(error);
 
       try {
@@ -140,7 +139,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
       const secret = 'test-secret';
       const error = new Error('jwt expired');
       error.name = 'TokenExpiredError';
-      
+
       jwtVerifyStub.throws(error);
 
       try {
@@ -157,9 +156,9 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
   describe('Spy Example - Function Call Tracking', () => {
     it('should track function calls with sinon.spy', () => {
       const mockAuthService = {
-        login: (email, password) => {
+        login: (_email, _password) => {
           return { success: true, token: 'mock-token' };
-        }
+        },
       };
 
       const loginSpy = sinon.spy(mockAuthService, 'login');
@@ -192,18 +191,19 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
   describe('Mock Example - Complete Object Behavior', () => {
     it('should mock database query with expected behavior', async () => {
       const mockDb = {
-        query: sinon.stub()
+        query: sinon.stub(),
       };
 
       // Setup mock responses
-      mockDb.query.withArgs('SELECT * FROM users WHERE id = ?', [1])
+      mockDb.query
+        .withArgs('SELECT * FROM users WHERE id = ?', [1])
         .resolves([[{ id: 1, email: 'user1@example.com' }]]);
-      
-      mockDb.query.withArgs('SELECT * FROM users WHERE id = ?', [2])
+
+      mockDb.query
+        .withArgs('SELECT * FROM users WHERE id = ?', [2])
         .resolves([[{ id: 2, email: 'user2@example.com' }]]);
-      
-      mockDb.query.withArgs('SELECT * FROM users WHERE id = ?', [999])
-        .resolves([[]]);
+
+      mockDb.query.withArgs('SELECT * FROM users WHERE id = ?', [999]).resolves([[]]);
 
       // Test queries
       const result1 = await mockDb.query('SELECT * FROM users WHERE id = ?', [1]);
@@ -220,7 +220,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
       const mockLogger = {
         info: sinon.spy(),
         error: sinon.spy(),
-        warn: sinon.spy()
+        warn: sinon.spy(),
       };
 
       // Simulate application code
@@ -264,9 +264,9 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
     it('should test token expiration with fake timers', () => {
       const mockToken = {
         expiresAt: Date.now() + 3600000, // 1 hour from now
-        isExpired: function() {
+        isExpired: function () {
           return Date.now() > this.expiresAt;
-        }
+        },
       };
 
       expect(mockToken.isExpired()).to.be.false;
@@ -281,7 +281,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
   describe('Stub Chaining - Complex Scenarios', () => {
     it('should stub function to return different values on consecutive calls', () => {
       const stub = sinon.stub();
-      
+
       stub.onFirstCall().returns('first');
       stub.onSecondCall().returns('second');
       stub.onThirdCall().returns('third');
@@ -294,7 +294,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
 
     it('should stub async function with different outcomes', async () => {
       const asyncStub = sinon.stub();
-      
+
       asyncStub.onFirstCall().resolves({ success: true });
       asyncStub.onSecondCall().rejects(new Error('Network error'));
       asyncStub.onThirdCall().resolves({ success: false, reason: 'Invalid credentials' });
@@ -318,7 +318,7 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
   describe('Argument Matchers - Flexible Stubbing', () => {
     it('should use sinon.match for flexible argument matching', () => {
       const stub = sinon.stub();
-      
+
       stub.withArgs(sinon.match.string).returns('string argument');
       stub.withArgs(sinon.match.number).returns('number argument');
       stub.withArgs(sinon.match.object).returns('object argument');
@@ -330,12 +330,11 @@ describe('Authentication Utils - Unit Tests with Sinon', () => {
 
     it('should match partial objects with sinon.match', () => {
       const stub = sinon.stub();
-      
+
       stub.withArgs(sinon.match({ email: sinon.match.string })).returns('valid email object');
 
       expect(stub({ email: 'test@example.com', name: 'John' })).to.equal('valid email object');
       expect(stub({ email: 'admin@example.com' })).to.equal('valid email object');
     });
   });
-
 });

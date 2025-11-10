@@ -5,6 +5,7 @@ Sistema completo di gestione aziendale con dashboard interattiva, timesheet, rim
 ## 🎯 Caratteristiche Principali
 
 ### ✨ Funzionalità
+
 - **Autenticazione Completa**: Registrazione, login, reset password con token crittografico
 - **Dashboard Interattiva**: Visualizzazione statistiche e attività in tempo reale
 - **Gestione Timesheet**: Tracciamento ore lavorate con calcolo automatico
@@ -14,6 +15,7 @@ Sistema completo di gestione aziendale con dashboard interattiva, timesheet, rim
 - **Responsive Design**: Interfaccia ottimizzata per desktop e mobile
 
 ### 🔒 Sicurezza
+
 - **JWT Authentication**: Token Bearer per autenticazione stateless
 - **Password Hashing**: bcrypt con 10 rounds
 - **Rate Limiting**: Protezione da brute-force (5 tentativi login/15min)
@@ -28,6 +30,7 @@ Sistema completo di gestione aziendale con dashboard interattiva, timesheet, rim
 ### Stack Tecnologico
 
 **Backend:**
+
 - Node.js + Express.js
 - MySQL (database relazionale)
 - JWT per autenticazione
@@ -36,6 +39,7 @@ Sistema completo di gestione aziendale con dashboard interattiva, timesheet, rim
 - Mocha + Chai per testing
 
 **Frontend:**
+
 - Vue.js 3 (Composition API)
 - Pinia (state management)
 - Vue Router
@@ -71,7 +75,7 @@ ProgettoFinale/
 │
 ├── START-SERVERS.bat            # Script avvio automatico
 ├── STOP-SERVERS.bat             # Script stop server
-└── README.md                   
+└── README.md
 ```
 
 ## 🚀 Installazione e Avvio
@@ -158,6 +162,7 @@ START-SERVERS.bat
 ```
 
 Questo script:
+
 1. Ferma eventuali processi Node esistenti
 2. Avvia il backend sulla porta 3001
 3. Avvia il frontend sulla porta 5173
@@ -209,52 +214,52 @@ Consulta il codice in `server.js` (funzione `initDB()`) per lo schema completo.
 
 ### Autenticazione
 
-| Metodo | Endpoint | Descrizione | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/register` | Registrazione nuovo utente | No |
-| POST | `/api/login` | Login utente | No |
-| POST | `/api/auth/forgot-password` | Richiesta reset password | No |
-| POST | `/api/auth/reset-password` | Reset password con token | No |
+| Metodo | Endpoint                    | Descrizione                | Auth |
+| ------ | --------------------------- | -------------------------- | ---- |
+| POST   | `/api/register`             | Registrazione nuovo utente | No   |
+| POST   | `/api/login`                | Login utente               | No   |
+| POST   | `/api/auth/forgot-password` | Richiesta reset password   | No   |
+| POST   | `/api/auth/reset-password`  | Reset password con token   | No   |
 
 ### Profilo
 
-| Metodo | Endpoint | Descrizione | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/profile/:userId` | Ottieni profilo utente | Sì |
-| PUT | `/api/profile/:userId` | Aggiorna profilo | Sì |
+| Metodo | Endpoint               | Descrizione            | Auth |
+| ------ | ---------------------- | ---------------------- | ---- |
+| GET    | `/api/profile/:userId` | Ottieni profilo utente | Sì   |
+| PUT    | `/api/profile/:userId` | Aggiorna profilo       | Sì   |
 
 ### Timesheet
 
-| Metodo | Endpoint | Descrizione | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/timesheet` | Crea voce timesheet | Sì |
-| GET | `/api/timesheet/:userId` | Lista timesheet utente | Sì |
-| PUT | `/api/timesheet/:id` | Aggiorna voce | Sì |
-| DELETE | `/api/timesheet/:id` | Elimina voce | Sì |
+| Metodo | Endpoint                 | Descrizione            | Auth |
+| ------ | ------------------------ | ---------------------- | ---- |
+| POST   | `/api/timesheet`         | Crea voce timesheet    | Sì   |
+| GET    | `/api/timesheet/:userId` | Lista timesheet utente | Sì   |
+| PUT    | `/api/timesheet/:id`     | Aggiorna voce          | Sì   |
+| DELETE | `/api/timesheet/:id`     | Elimina voce           | Sì   |
 
 ### Rimborsi Spese
 
-| Metodo | Endpoint | Descrizione | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/expenses` | Crea rimborso | Sì |
-| GET | `/api/expenses/:userId` | Lista rimborsi utente | Sì |
-| PUT | `/api/expenses/:id` | Aggiorna rimborso | Sì |
-| DELETE | `/api/expenses/:id` | Elimina rimborso | Sì |
+| Metodo | Endpoint                | Descrizione           | Auth |
+| ------ | ----------------------- | --------------------- | ---- |
+| POST   | `/api/expenses`         | Crea rimborso         | Sì   |
+| GET    | `/api/expenses/:userId` | Lista rimborsi utente | Sì   |
+| PUT    | `/api/expenses/:id`     | Aggiorna rimborso     | Sì   |
+| DELETE | `/api/expenses/:id`     | Elimina rimborso      | Sì   |
 
 ### Buste Paga
 
-| Metodo | Endpoint | Descrizione | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/payslips/generate` | Genera busta paga da timesheet | Sì |
-| GET | `/api/payslips/:userId` | Lista buste paga utente | Sì |
-| PUT | `/api/payslips/:id/recalculate` | Ricalcola busta paga | Sì |
-| DELETE | `/api/payslips/:id` | Elimina busta paga | Sì |
+| Metodo | Endpoint                        | Descrizione                    | Auth |
+| ------ | ------------------------------- | ------------------------------ | ---- |
+| POST   | `/api/payslips/generate`        | Genera busta paga da timesheet | Sì   |
+| GET    | `/api/payslips/:userId`         | Lista buste paga utente        | Sì   |
+| PUT    | `/api/payslips/:id/recalculate` | Ricalcola busta paga           | Sì   |
+| DELETE | `/api/payslips/:id`             | Elimina busta paga             | Sì   |
 
 ### Dashboard
 
-| Metodo | Endpoint | Descrizione | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/dashboard/:userId` | Statistiche dashboard | Sì |
+| Metodo | Endpoint                 | Descrizione           | Auth |
+| ------ | ------------------------ | --------------------- | ---- |
+| GET    | `/api/dashboard/:userId` | Statistiche dashboard | Sì   |
 
 ## 🧪 Testing
 
@@ -280,10 +285,38 @@ npm run test:watch
 ```
 
 **Test Suite Include:**
+
 - Test unitari (validazione, auth utils)
 - Test di integrazione (API endpoints)
 - Test di sicurezza (SQL injection, XSS)
 - Coverage reporting con nyc
+
+## 🎨 Linting e Formattazione
+
+Il progetto utilizza **ESLint** e **Prettier** per garantire qualità e consistenza del codice.
+
+### Comandi Disponibili
+
+```bash
+# Lint di tutto il progetto (backend + frontend)
+npm run lint
+
+# Auto-fix di tutti i problemi risolvibili
+npm run lint:fix
+
+# Formatta tutto il codice
+npm run format
+
+# Verifica formattazione senza modificare
+npm run format:check
+```
+
+### Configurazione
+
+- **ESLint**: Regole specifiche per Node.js/Express e Vue.js 3
+- **Prettier**: Formattazione automatica (2 spazi, virgolette singole, semicolon)
+- **EditorConfig**: Consistenza tra diversi editor
+- **VSCode**: Settings e estensioni consigliate in `.vscode/`
 
 ## 📱 Pagine Applicazione
 
@@ -300,27 +333,31 @@ npm run test:watch
 ### Cambio Porte
 
 **Backend** - Modificare in `.env`:
+
 ```env
 PORT=3001
 ```
 
 **Frontend** - Modificare in `vite.config.js`:
+
 ```javascript
 export default defineConfig({
   server: {
-    port: 5173
-  }
-})
+    port: 5173,
+  },
+});
 ```
 
 ### Logging
 
 Configurare livello log in `.env`:
+
 ```env
 LOG_LEVEL=debug  # debug, info, warn, error
 ```
 
 I log sono salvati in:
+
 - `dashboard-backend/logs/application-YYYY-MM-DD.log`
 - `dashboard-backend/logs/error-YYYY-MM-DD.log`
 
@@ -331,15 +368,15 @@ Modificare in `server.js`:
 ```javascript
 // Login limiter
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minuti
-    max: 5, // 5 tentativi
-    message: { success: false, message: 'Troppi tentativi...' }
+  windowMs: 15 * 60 * 1000, // 15 minuti
+  max: 5, // 5 tentativi
+  message: { success: false, message: 'Troppi tentativi...' },
 });
 
 // API limiter
 const apiLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minuto
-    max: 100 // 100 richieste
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 100, // 100 richieste
 });
 ```
 
@@ -449,6 +486,7 @@ pm2 startup
 ### Problema: Errore connessione database
 
 **Soluzione:**
+
 1. Verificare MySQL sia avviato: `mysql -u root -p`
 2. Controllare credenziali in `.env`
 3. Verificare porta MySQL (default 3306)
@@ -456,6 +494,7 @@ pm2 startup
 ### Problema: CORS error
 
 **Soluzione:**
+
 1. Verificare `FRONTEND_URL` in backend `.env`
 2. Controllare porta frontend corrisponda (5173)
 3. Verificare origin in console browser
@@ -463,6 +502,7 @@ pm2 startup
 ### Problema: JWT token non valido
 
 **Soluzione:**
+
 1. Verificare JWT_SECRET sia lo stesso in `.env`
 2. Controllare scadenza token
 3. Rifare login per ottenere nuovo token
@@ -471,6 +511,7 @@ pm2 startup
 
 **Soluzione:**
 Temporaneamente aumentare limiti in `server.js` durante sviluppo:
+
 ```javascript
 max: 100, // invece di 5 per login
 ```
@@ -482,6 +523,7 @@ Progetto accademico - Tutti i diritti riservati
 ## 👨‍💻 Autore
 
 **Gianmarco Sabbatini**
+
 - GitHub: [@GianmarcoSabbatini](https://github.com/GianmarcoSabbatini)
 
 ## 🙏 Ringraziamenti
@@ -489,6 +531,7 @@ Progetto accademico - Tutti i diritti riservati
 Progetto finale sviluppato per il corso di sviluppo web.
 
 ### Tecnologie utilizzate:
+
 - Vue.js Team per il framework frontend
 - Express.js Team per il framework backend
 - MySQL per il database
@@ -496,5 +539,5 @@ Progetto finale sviluppato per il corso di sviluppo web.
 
 ---
 
-**Versione:** 1.0.0  
+**Versione:** 1.0.0
 **Ultimo aggiornamento:** Novembre 2025

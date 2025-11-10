@@ -1,38 +1,33 @@
 <template>
   <div class="rimborso-page">
     <MainHeader />
-    
+
     <!-- Quick Actions -->
-    <QuickActions activePage="rimborso-spese" />
+    <QuickActions active-page="rimborso-spese" />
 
     <!-- Main Content -->
     <main class="rimborso-content">
       <!-- Form per inserire rimborso -->
       <div class="rimborso-form-section">
         <h2><i class="fas fa-plus-circle"></i> Richiedi Rimborso</h2>
-        <form @submit.prevent="addRimborso" class="rimborso-form">
+        <form class="rimborso-form" @submit.prevent="addRimborso">
           <div class="form-row">
             <div class="form-group">
               <label for="date">Data Spesa</label>
-              <input 
-                type="date" 
-                id="date" 
-                v-model="newRimborso.date" 
-                required
-                :max="today"
-              >
+              <input id="date" v-model="newRimborso.date" type="date"
+required :max="today" />
             </div>
             <div class="form-group">
               <label for="amount">Importo (€)</label>
-              <input 
-                type="number" 
-                id="amount" 
-                v-model.number="newRimborso.amount" 
-                min="0.01" 
-                step="0.01" 
+              <input
+                id="amount"
+                v-model.number="newRimborso.amount"
+                type="number"
+                min="0.01"
+                step="0.01"
                 required
                 placeholder="Es. 25.50"
-              >
+              />
             </div>
           </div>
 
@@ -62,9 +57,9 @@
 
           <div class="form-group full-width">
             <label for="description">Descrizione</label>
-            <textarea 
-              id="description" 
-              v-model="newRimborso.description" 
+            <textarea
+              id="description"
+              v-model="newRimborso.description"
               rows="3"
               placeholder="Descrivi la spesa sostenuta..."
               required
@@ -74,12 +69,12 @@
           <div class="form-group full-width">
             <label for="receipt">Ricevuta/Fattura</label>
             <div class="file-upload">
-              <input 
-                type="file" 
-                id="receipt" 
-                @change="handleFileUpload"
+              <input
+                id="receipt"
+                type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
-              >
+                @change="handleFileUpload"
+              />
               <label for="receipt" class="file-upload-label">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <span>{{ fileName || 'Carica file (PDF, JPG, PNG)' }}</span>
@@ -98,31 +93,31 @@
         <div class="list-header">
           <h2><i class="fas fa-list"></i> Storico Rimborsi</h2>
           <div class="filter-status">
-            <button 
-              @click="selectedStatus = 'all'" 
+            <button
               :class="{ active: selectedStatus === 'all' }"
               class="filter-btn"
+              @click="selectedStatus = 'all'"
             >
               Tutti
             </button>
-            <button 
-              @click="selectedStatus = 'pending'" 
+            <button
               :class="{ active: selectedStatus === 'pending' }"
               class="filter-btn"
+              @click="selectedStatus = 'pending'"
             >
               In Attesa
             </button>
-            <button 
-              @click="selectedStatus = 'approved'" 
+            <button
               :class="{ active: selectedStatus === 'approved' }"
               class="filter-btn"
+              @click="selectedStatus = 'approved'"
             >
               Approvati
             </button>
-            <button 
-              @click="selectedStatus = 'rejected'" 
+            <button
               :class="{ active: selectedStatus === 'rejected' }"
               class="filter-btn"
+              @click="selectedStatus = 'rejected'"
             >
               Rifiutati
             </button>
@@ -167,11 +162,7 @@
             <p>Nessuna richiesta trovata</p>
           </div>
 
-          <div 
-            v-for="rimborso in filteredRimborsi" 
-            :key="rimborso.id" 
-            class="rimborso-card"
-          >
+          <div v-for="rimborso in filteredRimborsi" :key="rimborso.id" class="rimborso-card">
             <div class="rimborso-header">
               <div class="rimborso-info">
                 <h3 class="rimborso-category">{{ rimborso.category }}</h3>
@@ -194,24 +185,24 @@
                   <i class="fas fa-credit-card"></i>
                   {{ rimborso.payment }}
                 </span>
-                <span class="detail-item" v-if="rimborso.receipt">
+                <span v-if="rimborso.receipt" class="detail-item">
                   <i class="fas fa-paperclip"></i>
                   {{ rimborso.receipt }}
                 </span>
               </div>
             </div>
             <div class="rimborso-footer">
-              <button 
-                @click="openDeleteModal(rimborso.id)" 
-                class="delete-rimborso-btn"
+              <button
                 v-if="rimborso.status === 'pending'"
+                class="delete-rimborso-btn"
+                @click="openDeleteModal(rimborso.id)"
               >
                 <i class="fas fa-trash"></i> Elimina
               </button>
-              <button 
-                @click="downloadReceipt(rimborso)"
-                class="download-receipt-btn"
+              <button
                 v-if="rimborso.receipt"
+                class="download-receipt-btn"
+                @click="downloadReceipt(rimborso)"
               >
                 <i class="fas fa-download"></i> Scarica Ricevuta
               </button>
@@ -224,8 +215,19 @@
 
   <!-- Snackbar per notifiche -->
   <transition name="snackbar">
-    <div v-if="notificationStore.notification.show" :class="['snackbar', notificationStore.notification.type]">
-      <i :class="notificationStore.notification.type === 'success' ? 'fas fa-check-circle' : notificationStore.notification.type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-exclamation-circle'"></i>
+    <div
+      v-if="notificationStore.notification.show"
+      :class="['snackbar', notificationStore.notification.type]"
+    >
+      <i
+        :class="
+          notificationStore.notification.type === 'success'
+            ? 'fas fa-check-circle'
+            : notificationStore.notification.type === 'warning'
+              ? 'fas fa-exclamation-triangle'
+              : 'fas fa-exclamation-circle'
+        "
+      ></i>
       <span>{{ notificationStore.notification.message }}</span>
     </div>
   </transition>
@@ -238,12 +240,15 @@
           <i class="fas fa-trash-alt"></i>
         </div>
         <h3 class="delete-modal-title">Conferma Eliminazione</h3>
-        <p class="delete-modal-text">Sei sicuro di voler eliminare questa richiesta di rimborso? Questa azione non può essere annullata.</p>
+        <p class="delete-modal-text">
+          Sei sicuro di voler eliminare questa richiesta di rimborso? Questa azione non può essere
+          annullata.
+        </p>
         <div class="delete-modal-actions">
-          <button @click="cancelDelete" class="cancel-delete-btn">
+          <button class="cancel-delete-btn" @click="cancelDelete">
             <i class="fas fa-times"></i> Annulla
           </button>
-          <button @click="confirmDelete" class="confirm-delete-btn">
+          <button class="confirm-delete-btn" @click="confirmDelete">
             <i class="fas fa-trash-alt"></i> Elimina
           </button>
         </div>
@@ -275,7 +280,7 @@ const newRimborso = ref({
   category: '',
   payment: '',
   description: '',
-  receipt: null
+  receipt: null,
 });
 
 // Rimborsi list
@@ -310,13 +315,13 @@ const loadExpenses = async () => {
     loading.value = true;
     const response = await axios.get(`${API_URL}/api/expenses`, {
       headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
-    
+
     if (response.data.success) {
       // Map backend data to frontend format
-      rimborsiList.value = response.data.expenses.map(expense => ({
+      rimborsiList.value = response.data.expenses.map((expense) => ({
         id: expense.id,
         date: expense.date,
         amount: parseFloat(expense.amount),
@@ -324,7 +329,7 @@ const loadExpenses = async () => {
         payment: expense.payment_method,
         description: expense.description,
         receipt: expense.receipt_url,
-        status: expense.status
+        status: expense.status,
       }));
     }
   } catch (error) {
@@ -351,11 +356,15 @@ const handleFileUpload = (event) => {
   }
 };
 
-
 // Add rimborso
 const addRimborso = async () => {
-  if (!newRimborso.value.date || !newRimborso.value.amount || !newRimborso.value.category || 
-      !newRimborso.value.payment || !newRimborso.value.description) {
+  if (
+    !newRimborso.value.date ||
+    !newRimborso.value.amount ||
+    !newRimborso.value.category ||
+    !newRimborso.value.payment ||
+    !newRimborso.value.description
+  ) {
     notificationStore.showNotification('Compila tutti i campi obbligatori', 'warning');
     return;
   }
@@ -369,13 +378,13 @@ const addRimborso = async () => {
       category: newRimborso.value.category,
       payment_method: newRimborso.value.payment, // Backend expects payment_method
       description: newRimborso.value.description,
-      receipt_url: newRimborso.value.receipt || null
+      receipt_url: newRimborso.value.receipt || null,
     };
 
     const response = await axios.post(`${API_URL}/api/expenses`, expenseData, {
       headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
 
     // Map backend response to frontend format
@@ -388,11 +397,11 @@ const addRimborso = async () => {
       payment: expense.payment_method,
       description: expense.description,
       receipt: expense.receipt_url,
-      status: expense.status || 'pending'
+      status: expense.status || 'pending',
     };
 
     rimborsiList.value.unshift(rimborso);
-    
+
     // Reset form
     newRimborso.value = {
       date: today,
@@ -400,7 +409,7 @@ const addRimborso = async () => {
       category: '',
       payment: '',
       description: '',
-      receipt: null
+      receipt: null,
     };
     fileName.value = '';
     document.getElementById('receipt').value = '';
@@ -412,11 +421,10 @@ const addRimborso = async () => {
       `Nuovo rimborso spese di €${rimborso.amount} per ${rimborso.category}`,
       'success'
     );
-
   } catch (error) {
     console.error('Error adding expense:', error);
     notificationStore.showNotification(
-      error.response?.data?.error || 'Errore durante l\'invio della richiesta',
+      error.response?.data?.error || "Errore durante l'invio della richiesta",
       'error'
     );
   } finally {
@@ -431,24 +439,23 @@ const deleteRimborso = async (id) => {
 
     await axios.delete(`${API_URL}/api/expenses/${id}`, {
       headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     });
 
-    rimborsiList.value = rimborsiList.value.filter(r => r.id !== id);
+    rimborsiList.value = rimborsiList.value.filter((r) => r.id !== id);
     notificationStore.showNotification('Richiesta eliminata con successo', 'success');
-    
+
     // Aggiungi notifica nella campanella
     headerNotificationStore.addNotification(
       'Sistema',
       'Hai eliminato una richiesta di rimborso spese',
       'info'
     );
-
   } catch (error) {
     console.error('Error deleting expense:', error);
     notificationStore.showNotification(
-      error.response?.data?.error || 'Errore durante l\'eliminazione',
+      error.response?.data?.error || "Errore durante l'eliminazione",
       'error'
     );
   } finally {
@@ -461,7 +468,7 @@ const filteredRimborsi = computed(() => {
   if (selectedStatus.value === 'all') {
     return rimborsiList.value;
   }
-  return rimborsiList.value.filter(r => r.status === selectedStatus.value);
+  return rimborsiList.value.filter((r) => r.status === selectedStatus.value);
 });
 
 // Computed statistics
@@ -471,25 +478,25 @@ const totalRequested = computed(() => {
 
 const totalApproved = computed(() => {
   return rimborsiList.value
-    .filter(r => r.status === 'approved')
+    .filter((r) => r.status === 'approved')
     .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 });
 
 const totalPending = computed(() => {
   return rimborsiList.value
-    .filter(r => r.status === 'pending')
+    .filter((r) => r.status === 'pending')
     .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
 });
 
 // Format date
 const formatDate = (dateString) => {
   if (!dateString) return 'Data non disponibile';
-  
+
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
     return 'Data non valida';
   }
-  
+
   const options = { day: '2-digit', month: 'long', year: 'numeric' };
   return date.toLocaleDateString('it-IT', options);
 };
@@ -499,7 +506,7 @@ const getStatusLabel = (status) => {
   const labels = {
     pending: 'In Attesa',
     approved: 'Approvato',
-    rejected: 'Rifiutato'
+    rejected: 'Rifiutato',
   };
   return labels[status] || status;
 };
@@ -514,7 +521,7 @@ const downloadReceipt = (rimborso) => {
   // Crea un elemento <a> temporaneo per simulare il download
   // Nota: Attualmente il backend non gestisce il vero storage dei file
   // Questo simula il download creando un file di testo con le info del rimborso
-  
+
   const content = `
 RICEVUTA RIMBORSO SPESE
 ========================
@@ -540,7 +547,7 @@ Generato il ${new Date().toLocaleDateString('it-IT')}
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
-  
+
   notificationStore.showNotification('Ricevuta scaricata con successo', 'success');
 };
 </script>
@@ -643,7 +650,7 @@ Generato il ${new Date().toLocaleDateString('it-IT')}
   position: relative;
 }
 
-.file-upload input[type="file"] {
+.file-upload input[type='file'] {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -981,30 +988,71 @@ Generato il ${new Date().toLocaleDateString('it-IT')}
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .rimborso-content { padding: 1.5rem; grid-template-columns: 1fr; }
-  .rimborso-form-section { position: static; }
-  .stats-cards { grid-template-columns: repeat(3, 1fr); }
+  .rimborso-content {
+    padding: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+  .rimborso-form-section {
+    position: static;
+  }
+  .stats-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .rimborso-content { padding: 1rem; }
-  .rimborso-form-section { padding: 1.5rem; }
-  .form-row { grid-template-columns: 1fr; }
-  .stats-cards { grid-template-columns: 1fr; }
-  .list-header { flex-direction: column; align-items: flex-start; }
-  .rimborso-header { flex-direction: column; gap: 1rem; }
-  .rimborso-amount-status { align-items: flex-start; }
-  .rimborso-footer { flex-direction: column; }
-  .delete-rimborso-btn, .download-receipt-btn { width: 100%; justify-content: center; }
+  .rimborso-content {
+    padding: 1rem;
+  }
+  .rimborso-form-section {
+    padding: 1.5rem;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rimborso-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .rimborso-amount-status {
+    align-items: flex-start;
+  }
+  .rimborso-footer {
+    flex-direction: column;
+  }
+  .delete-rimborso-btn,
+  .download-receipt-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
-  .rimborso-content { padding: 0.75rem; }
-  .rimborso-form-section { padding: 1rem; }
-  .rimborso-card { padding: 1rem; }
-  .stats-cards { gap: 0.75rem; }
-  .filter-status { width: 100%; }
-  .filter-btn { flex: 1; }
+  .rimborso-content {
+    padding: 0.75rem;
+  }
+  .rimborso-form-section {
+    padding: 1rem;
+  }
+  .rimborso-card {
+    padding: 1rem;
+  }
+  .stats-cards {
+    gap: 0.75rem;
+  }
+  .filter-status {
+    width: 100%;
+  }
+  .filter-btn {
+    flex: 1;
+  }
 }
 
 /* Snackbar Styles */
@@ -1021,7 +1069,9 @@ Generato il ${new Date().toLocaleDateString('it-IT')}
   gap: 12px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   backdrop-filter: blur(10px);
 }
