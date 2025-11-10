@@ -16,11 +16,11 @@ const { verifyToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Security Middleware
+// Middleware di sicurezza
 app.use(helmet());
 app.use(compression());
 
-// CORS Configuration
+// Configurazione CORS
 const allowedOrigins = process.env.NODE_ENV === 'production'
     ? [process.env.FRONTEND_URL].filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', process.env.FRONTEND_URL].filter(Boolean);
@@ -42,7 +42,7 @@ app.use(cors({
 app.use(express.json());
 app.use(requestLogger);
 
-// Rate Limiting (disabled in test environment)
+// Rate Limiting (disabilitato in ambiente di test)
 const loginLimiter = process.env.NODE_ENV === 'test' ? (req, res, next) => next() : rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minuti
     max: 5,
@@ -57,7 +57,7 @@ const apiLimiter = process.env.NODE_ENV === 'test' ? (req, res, next) => next() 
 
 app.use('/api/', apiLimiter);
 
-// Database connection
+// Connessione al database
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -70,12 +70,12 @@ const dbConfig = {
 
 let db;
 
-// Initialize database
+// Inizializza database
 async function initDB() {
     try {
         logger.info('Inizializzazione database...');
         
-        // First connect without database to create it
+        // Prima connessione senza database per crearlo
         const tempDb = await mysql.createConnection({
             host: 'localhost',
             user: 'root',
@@ -87,15 +87,15 @@ async function initDB() {
         
         logger.info('Database dashboard_db verificato/creato');
         
-        // Now connect to the specific database using connection pool
+        // Ora connettiti al database specifico usando il pool di connessioni
         db = mysql.createPool(dbConfig);
         
-        // Test the connection
+        // Testa la connessione
         await db.query('SELECT 1');
         logger.info('✅ Connesso a MySQL con successo (connection pool)');
         logger.logDatabase('Connessione MySQL Pool', true, { database: 'dashboard_db' });
 
-        // Create tables
+        // Crea tabelle
         await db.execute(`
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -123,7 +123,7 @@ async function initDB() {
         `);
         logger.debug('Tabella profiles verificata/creata');
         
-        // Add hourly_rate column if it doesn't exist (for existing databases)
+        // Aggiungi colonna hourly_rate se non esiste (per database esistenti)
         try {
             await db.execute(`
                 ALTER TABLE profiles 
@@ -147,7 +147,7 @@ async function initDB() {
         `);
         logger.debug('Tabella messages verificata/creata');
 
-        // Add sample messages if empty
+        // Aggiungi messaggi di esempio se vuoto
         const [messages] = await db.execute('SELECT COUNT(*) as count FROM messages');
         if (messages[0].count === 0) {
             await db.execute(`
@@ -159,7 +159,7 @@ async function initDB() {
             logger.info('Messaggi di esempio inseriti nel database');
         }
 
-        // Create timesheet table
+        // Crea tabella timesheet
         await db.execute(`
             CREATE TABLE IF NOT EXISTS timesheet (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -175,7 +175,7 @@ async function initDB() {
         `);
         logger.debug('Tabella timesheet verificata/creata');
 
-        // Create expense_reimbursement table
+        // Crea tabella expense_reimbursement
         await db.execute(`
             CREATE TABLE IF NOT EXISTS expense_reimbursement (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -193,7 +193,7 @@ async function initDB() {
         `);
         logger.debug('Tabella expense_reimbursement verificata/creata');
 
-        // Create payslips table
+        // Crea tabella payslips
         await db.execute(`
             CREATE TABLE IF NOT EXISTS payslips (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -212,7 +212,7 @@ async function initDB() {
         `);
         logger.debug('Tabella payslips verificata/creata');
 
-        // Create password_resets table
+        // Crea tabella password_resets
         await db.execute(`
             CREATE TABLE IF NOT EXISTS password_resets (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -410,7 +410,7 @@ app.post('/api/login', loginLimiter, [
 
 // ==================== PASSWORD RESET ====================
 
-// Request password reset
+// Richiedi reset password
 app.post('/api/auth/forgot-password', [
     body('email').isEmail().normalizeEmail()
 ], async (req, res) => {
@@ -427,7 +427,7 @@ app.post('/api/auth/forgot-password', [
         
         logger.info('Richiesta reset password', { email });
 
-        // Find user
+        // Trova utente
         const [users] = await db.execute('SELECT id, username, email FROM users WHERE email = ?', [email]);
         
         if (users.length === 0) {
@@ -442,17 +442,17 @@ app.post('/api/auth/forgot-password', [
 
         const user = users[0];
 
-        // Generate random token
+        // Genera token casuale
         const crypto = require('crypto');
         const token = crypto.randomBytes(32).toString('hex');
         
         // Token valido per 1 ora
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-        // Delete old tokens for this user
+        // Elimina vecchi token per questo utente
         await db.execute('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
 
-        // Save new token
+        // Salva nuovo token
         await db.execute(
             'INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)',
             [user.id, token, expiresAt]
@@ -487,7 +487,7 @@ app.post('/api/auth/forgot-password', [
     }
 });
 
-// Reset password with token
+// Reset password con token
 app.post('/api/auth/reset-password', [
     body('token').notEmpty().isLength({ min: 64, max: 64 }),
     body('newPassword').isLength({ min: 6 }).withMessage('La password deve essere di almeno 6 caratteri')
@@ -506,7 +506,7 @@ app.post('/api/auth/reset-password', [
         
         logger.info('Tentativo reset password con token');
 
-        // Find valid token
+        // Trova token valido
         const [resets] = await db.execute(
             `SELECT pr.*, u.username, u.email 
              FROM password_resets pr 
@@ -525,16 +525,16 @@ app.post('/api/auth/reset-password', [
 
         const reset = resets[0];
 
-        // Hash new password
+        // Hash nuova password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update user password
+        // Aggiorna password utente
         await db.execute(
             'UPDATE users SET password = ? WHERE id = ?',
             [hashedPassword, reset.user_id]
         );
 
-        // Mark token as used
+        // Marca token come usato
         await db.execute(
             'UPDATE password_resets SET used = TRUE WHERE id = ?',
             [reset.id]
@@ -844,10 +844,10 @@ app.delete('/api/messages/:id', verifyToken, async (req, res) => {
 });
 
 // ============================================
-// TIMESHEET API
+// API TIMESHEET
 // ============================================
 
-// GET all timesheet entries for user
+// GET tutte le voci del timesheet dell'utente
 app.get('/api/timesheet', verifyToken, async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -876,7 +876,7 @@ app.get('/api/timesheet', verifyToken, async (req, res) => {
     }
 });
 
-// POST new timesheet entry
+// POST nuova voce timesheet
 app.post('/api/timesheet', verifyToken, [
     body('date').isDate(),
     body('project').trim().notEmpty(),
@@ -932,7 +932,7 @@ app.post('/api/timesheet', verifyToken, [
     }
 });
 
-// DELETE timesheet entry
+// DELETE voce timesheet
 app.delete('/api/timesheet/:id', verifyToken, async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -940,7 +940,7 @@ app.delete('/api/timesheet/:id', verifyToken, async (req, res) => {
         
         logger.info('Tentativo di eliminazione timesheet', { userId, entryId: id });
         
-        // Verify ownership
+        // Verifica proprietà
         const [entries] = await db.execute(
             'SELECT user_id FROM timesheet WHERE id = ?',
             [id]

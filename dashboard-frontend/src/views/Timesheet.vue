@@ -237,7 +237,7 @@ const notificationStore = useNotificationStore();
 const headerNotificationStore = useHeaderNotificationStore();
 const authStore = useAuthStore();
 
-// Form data
+// Dati del form
 const today = new Date().toISOString().split('T')[0];
 const newEntry = ref({
   date: today,
@@ -247,11 +247,11 @@ const newEntry = ref({
   description: ''
 });
 
-// Timesheet entries
+// Voci del timesheet
 const timesheetEntries = ref([]);
 const loading = ref(false);
 
-// Delete modal
+// Modale di eliminazione
 const showDeleteModal = ref(false);
 const entryToDelete = ref(null);
 
@@ -273,7 +273,7 @@ const confirmDelete = async () => {
   }
 };
 
-// Load timesheet entries from backend
+// Carica voci timesheet dal backend
 const loadTimesheetEntries = async () => {
   try {
     loading.value = true;
@@ -284,7 +284,7 @@ const loadTimesheetEntries = async () => {
     });
     
     if (response.data.success) {
-      // Convert hours to number to avoid string concatenation
+      // Converti ore in numero per evitare concatenazione stringa
       timesheetEntries.value = response.data.entries.map(entry => ({
         ...entry,
         hours: parseFloat(entry.hours)
@@ -298,14 +298,14 @@ const loadTimesheetEntries = async () => {
   }
 };
 
-// Load entries on component mount
+// Carica voci al montaggio del componente
 onMounted(() => {
   loadTimesheetEntries();
 });
 
 const selectedWeek = ref('current');
 
-// Add new entry
+// Aggiungi nuova voce
 const addTimesheetEntry = async () => {
   if (!newEntry.value.date || !newEntry.value.project || !newEntry.value.hours || !newEntry.value.type || !newEntry.value.description) {
     notificationStore.showNotification('Compila tutti i campi obbligatori', 'warning');
@@ -327,14 +327,14 @@ const addTimesheetEntry = async () => {
     });
 
     if (response.data.success) {
-      // Add to local list with hours as number
+      // Aggiungi alla lista locale con ore come numero
       const newEntryData = {
         ...response.data.entry,
         hours: parseFloat(response.data.entry.hours)
       };
       timesheetEntries.value.unshift(newEntryData);
       
-      // Reset form
+      // Resetta form
       newEntry.value = {
         date: today,
         project: '',
@@ -360,7 +360,7 @@ const addTimesheetEntry = async () => {
   }
 };
 
-// Delete entry
+// Elimina voce
 const deleteEntry = async (id) => {
   try {
     loading.value = true;
@@ -390,7 +390,7 @@ const deleteEntry = async (id) => {
   }
 };
 
-// Filter entries
+// Filtra voci
 const filteredEntries = computed(() => {
   if (selectedWeek.value === 'all') {
     return timesheetEntries.value;
@@ -412,14 +412,14 @@ const filteredEntries = computed(() => {
   return entries;
 });
 
-// Group entries by date (most recent first)
+// Raggruppa voci per data (più recenti prima)
 const groupedEntries = computed(() => {
   const groups = {};
   
-  // Group by date (normalize date format)
+  // Raggruppa per data (normalizza formato data)
   filteredEntries.value.forEach(entry => {
-    // Normalize date to YYYY-MM-DD format to ensure grouping works
-    const dateKey = entry.date.split('T')[0]; // Remove time if present
+    // Normalizza data in formato YYYY-MM-DD per assicurare il raggruppamento funzioni
+    const dateKey = entry.date.split('T')[0]; // Rimuovi ora se presente
     
     if (!groups[dateKey]) {
       groups[dateKey] = [];
@@ -427,7 +427,7 @@ const groupedEntries = computed(() => {
     groups[dateKey].push(entry);
   });
   
-  // Convert to array and sort by date (most recent first)
+  // Converti in array e ordina per data (più recenti prima)
   const groupedArray = Object.keys(groups)
     .sort((a, b) => new Date(b) - new Date(a))
     .map(date => {
@@ -447,7 +447,7 @@ const groupedEntries = computed(() => {
   return groupedArray;
 });
 
-// Computed statistics
+// Statistiche calcolate
 const totalHours = computed(() => {
   const total = filteredEntries.value.reduce((sum, entry) => sum + parseFloat(entry.hours || 0), 0);
   return parseFloat(total.toFixed(2));
@@ -463,7 +463,7 @@ const uniqueProjects = computed(() => {
   return projects.length;
 });
 
-// Format date
+// Formatta data
 const formatEntryDate = (dateString) => {
   const date = new Date(dateString);
   const options = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
@@ -471,7 +471,7 @@ const formatEntryDate = (dateString) => {
 };
 
 const filterByWeek = () => {
-  // Filtering handled by computed property
+  // Filtro gestito dalla proprietà computed
 };
 </script>
 
@@ -482,8 +482,8 @@ const filterByWeek = () => {
   font-family: 'DM Sans', sans-serif;
 }
 
-/* Quick Actions (identiche alla dashboard) */
-/* Main Content */
+/* Azioni Rapide (identiche alla dashboard) */
+/* Contenuto Principale */
 .timesheet-content {
   max-width: 1400px;
   margin: 0 auto;
@@ -493,7 +493,7 @@ const filterByWeek = () => {
   gap: 2rem;
 }
 
-/* Timesheet Form */
+/* Form Timesheet */
 .timesheet-form-section {
   background-color: #ffffff;
   border-radius: 12px;
