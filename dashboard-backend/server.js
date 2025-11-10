@@ -143,7 +143,7 @@ async function initDB() {
     // Aggiungi colonna hourly_rate se non esiste (per database esistenti)
     try {
       await db.execute(`
-                ALTER TABLE profiles 
+                ALTER TABLE profiles
                 ADD COLUMN hourly_rate DECIMAL(10,2) DEFAULT 15.00
             `);
       logger.info('Colonna hourly_rate aggiunta alla tabella profiles');
@@ -168,7 +168,7 @@ async function initDB() {
     const [messages] = await db.execute('SELECT COUNT(*) as count FROM messages');
     if (messages[0].count === 0) {
       await db.execute(`
-                INSERT INTO messages (title, content, author) VALUES 
+                INSERT INTO messages (title, content, author) VALUES
                 ('Benvenuto in CoreTeam Digital', 'Questa è la tua dashboard personale. Qui puoi visualizzare messaggi, gestire il tuo profilo, timesheet e molto altro.', 'Sistema'),
                 ('Aggiornamento Sistema', 'Il sistema è stato aggiornato con nuove funzionalità per migliorare la tua esperienza lavorativa.', 'Admin'),
                 ('Promemoria', 'Ricordati di registrare le tue ore nel timesheet e di aggiornare le tue informazioni di profilo se necessario.', 'Risorse Umane')
@@ -385,7 +385,7 @@ app.post(
 
       const user = users[0];
 
-      // Check password
+      // Verifica password
       const isValid = await bcrypt.compare(password, user.password);
       if (!isValid) {
         logger.warn('Tentativo di login fallito: password errata', {
@@ -542,9 +542,9 @@ app.post(
 
       // Trova token valido
       const [resets] = await db.execute(
-        `SELECT pr.*, u.username, u.email 
-             FROM password_resets pr 
-             JOIN users u ON pr.user_id = u.id 
+        `SELECT pr.*, u.username, u.email
+             FROM password_resets pr
+             JOIN users u ON pr.user_id = u.id
              WHERE pr.token = ? AND pr.used = FALSE AND pr.expires_at > NOW()`,
         [token]
       );
@@ -611,9 +611,9 @@ app.get('/api/profile', verifyToken, async (req, res) => {
 
     const [profiles] = await db.execute(
       `
-            SELECT p.*, u.username, u.email 
-            FROM profiles p 
-            JOIN users u ON p.user_id = u.id 
+            SELECT p.*, u.username, u.email
+            FROM profiles p
+            JOIN users u ON p.user_id = u.id
             WHERE p.user_id = ?
         `,
       [userId]
@@ -655,8 +655,8 @@ app.put('/api/profile', verifyToken, async (req, res) => {
 
     await db.execute(
       `
-            UPDATE profiles 
-            SET job_title = ?, team = ? 
+            UPDATE profiles
+            SET job_title = ?, team = ?
             WHERE user_id = ?
         `,
       [job_title, team, userId]
@@ -1030,7 +1030,7 @@ app.delete('/api/timesheet/:id', verifyToken, async (req, res) => {
 // EXPENSE REIMBURSEMENT API
 // ============================================
 
-// GET all expense reimbursements for user
+// GET tutti i rimborsi spese dell'utente
 app.get('/api/expenses', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1059,7 +1059,7 @@ app.get('/api/expenses', verifyToken, async (req, res) => {
   }
 });
 
-// POST new expense reimbursement
+// POST nuovo rimborso spese
 app.post(
   '/api/expenses',
   verifyToken,
@@ -1122,7 +1122,7 @@ app.post(
   }
 );
 
-// DELETE expense reimbursement (only if pending)
+// DELETE rimborso spese (solo se in attesa)
 app.delete('/api/expenses/:id', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1130,7 +1130,7 @@ app.delete('/api/expenses/:id', verifyToken, async (req, res) => {
 
     logger.info('Tentativo di eliminazione rimborso', { userId, expenseId: id });
 
-    // Verify ownership and status
+    // Verifica proprietà e stato
     const [expenses] = await db.execute(
       'SELECT user_id, status FROM expense_reimbursement WHERE id = ?',
       [id]
@@ -1183,7 +1183,7 @@ app.delete('/api/expenses/:id', verifyToken, async (req, res) => {
 // PAYSLIPS API
 // ============================================
 
-// GET all payslips for user
+// GET tutte le buste paga dell'utente
 app.get('/api/payslips', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1286,7 +1286,7 @@ app.post(
   }
 );
 
-// POST generate payslip from timesheet
+// POST genera busta paga dal timesheet
 app.post(
   '/api/payslips/generate',
   verifyToken,
@@ -1307,7 +1307,7 @@ app.post(
 
       logger.info('Generazione busta paga da timesheet', { userId, month, year });
 
-      // Get user profile with hourly rate
+      // Ottieni profilo utente con tariffa oraria
       const [profiles] = await db.execute(
         'SELECT p.*, CONCAT(p.nome, " ", p.cognome) as full_name, p.hourly_rate FROM profiles p WHERE p.user_id = ?',
         [userId]
@@ -1323,7 +1323,7 @@ app.post(
       const profile = profiles[0];
       const hourlyRate = parseFloat(profile.hourly_rate) || 15.0;
 
-      // Check if payslip already exists for this month/year
+      // Verifica se esiste già una busta paga per questo mese/anno
       const [existing] = await db.execute(
         'SELECT id FROM payslips WHERE user_id = ? AND month = ? AND year = ?',
         [userId, month, year]
@@ -1336,7 +1336,7 @@ app.post(
         });
       }
 
-      // Get timesheet entries for the specified month/year
+      // Ottieni voci timesheet per il mese/anno specificato
       const monthNum = getMonthNumber(month);
       const [timeEntries] = await db.execute(
         'SELECT * FROM timesheet WHERE user_id = ? AND MONTH(date) = ? AND YEAR(date) = ?',
@@ -1360,7 +1360,7 @@ app.post(
       const inpsRate = 0.0919; // 9.19% INPS
       const inpsAmount = grossAmount * inpsRate;
 
-      // IRPEF progressive (simplified)
+      // IRPEF progressiva (semplificata)
       let irpefAmount = 0;
       if (grossAmount <= 15000) {
         irpefAmount = grossAmount * 0.23;
@@ -1452,7 +1452,7 @@ app.post(
   }
 );
 
-// PUT update/recalculate existing payslip
+// PUT aggiorna/ricalcola busta paga esistente
 app.put('/api/payslips/:id/recalculate', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -1460,7 +1460,7 @@ app.put('/api/payslips/:id/recalculate', verifyToken, async (req, res) => {
 
     logger.info('Ricalcolo busta paga', { userId, payslipId });
 
-    // Get existing payslip
+    // Ottieni busta paga esistente
     const [payslips] = await db.execute('SELECT * FROM payslips WHERE id = ? AND user_id = ?', [
       payslipId,
       userId,
@@ -1476,7 +1476,7 @@ app.put('/api/payslips/:id/recalculate', verifyToken, async (req, res) => {
     const payslip = payslips[0];
     const { month, year } = payslip;
 
-    // Get user profile with hourly rate
+    // Ottieni profilo utente con tariffa oraria
     const [profiles] = await db.execute(
       'SELECT p.*, CONCAT(p.nome, " ", p.cognome) as full_name, p.hourly_rate FROM profiles p WHERE p.user_id = ?',
       [userId]
@@ -1492,7 +1492,7 @@ app.put('/api/payslips/:id/recalculate', verifyToken, async (req, res) => {
     const profile = profiles[0];
     const hourlyRate = parseFloat(profile.hourly_rate) || 15.0;
 
-    // Get timesheet entries for the specified month/year
+    // Ottieni voci timesheet per il mese/anno specificato
     const monthNum = getMonthNumber(month);
 
     logger.debug('Ricalcolo - dati mese', { month, monthNum, year });
@@ -1522,7 +1522,7 @@ app.put('/api/payslips/:id/recalculate', verifyToken, async (req, res) => {
     const inpsRate = 0.0919; // 9.19% INPS
     const inpsAmount = grossAmount * inpsRate;
 
-    // IRPEF progressive (simplified)
+    // IRPEF progressiva (semplificata)
     let irpefAmount = 0;
     if (grossAmount <= 15000) {
       irpefAmount = grossAmount * 0.23;

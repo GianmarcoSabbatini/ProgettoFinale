@@ -466,7 +466,7 @@ const fetchPayslips = async () => {
   }
 };
 
-// Format date from DB (YYYY-MM-DD) to Italian format (DD/MM/YYYY)
+// Formatta data dal database (YYYY-MM-DD) al formato italiano (DD/MM/YYYY)
 const formatDateFromDB = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -517,7 +517,7 @@ const generatePayslip = async () => {
         'success'
       );
 
-      // Reset form
+      // Resetta il form
       generateForm.value.month = '';
       generateForm.value.year = '';
 
@@ -1906,6 +1906,234 @@ const filterBustePaga = () => {
   }
   to {
     opacity: 0;
+  }
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet (max 768px) */
+@media (max-width: 768px) {
+  .generate-form .form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .generate-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filters-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .buste-paga-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Modal ottimizzata per tablet */
+  .detail-modal-content {
+    max-width: 90%;
+  }
+
+  .amounts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+  .generate-card {
+    padding: 1.5rem;
+  }
+
+  .generate-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .generate-header h3 {
+    font-size: 1.25rem;
+  }
+
+  .generate-form .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-field select {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .generate-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .busta-card {
+    padding: 1.25rem;
+  }
+
+  /* Modal completamente responsive per mobile */
+  .detail-modal-content {
+    width: 95%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .detail-modal-header {
+    padding: 1rem 1.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-left {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .pdf-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+
+  .detail-modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .detail-modal-header .date-badge {
+    font-size: 0.8rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .close-modal-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
+  }
+
+  .detail-modal-body {
+    padding: 1.25rem;
+  }
+
+  .detail-section {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .info-item {
+    padding: 0.875rem;
+  }
+
+  .info-label {
+    font-size: 0.8rem;
+  }
+
+  .info-value {
+    font-size: 0.95rem;
+  }
+
+  /* Amounts grid in una colonna su mobile */
+  .amounts-grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .amount-card {
+    padding: 1.25rem;
+  }
+
+  .amount-label {
+    font-size: 0.8rem;
+  }
+
+  .amount-icon {
+    font-size: 1.25rem;
+  }
+
+  .amount-value {
+    font-size: 1.5rem;
+  }
+
+  /* Footer modal */
+  .detail-modal-footer {
+    flex-direction: column;
+    padding: 1rem 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .modal-download-btn,
+  .modal-close-btn,
+  .modal-recalc-btn {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  /* Notes box */
+  .notes-box {
+    padding: 1rem;
+  }
+
+  .notes-box h4 {
+    font-size: 0.9rem;
+  }
+
+  .notes-box p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Extra small mobile (max 360px) */
+@media (max-width: 360px) {
+  .detail-modal-content {
+    width: 98%;
+    border-radius: 8px;
+  }
+
+  .detail-modal-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .detail-modal-body {
+    padding: 1rem;
+  }
+
+  .detail-section {
+    padding: 1rem;
+  }
+
+  .amount-card {
+    padding: 1rem;
+  }
+
+  .amount-value {
+    font-size: 1.25rem;
   }
 }
 </style>

@@ -117,8 +117,9 @@ defineProps({
   }
 
   .action-card {
+    flex: 1 1 calc(50% - 0.5rem);
     padding: 1.25rem 0.75rem;
-    min-width: 150px;
+    min-width: 140px;
   }
 
   .action-card .icon {
@@ -132,45 +133,72 @@ defineProps({
 
 @media (max-width: 768px) {
   .quick-actions {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
     margin-bottom: 1.5rem;
     padding: 1rem 1rem 0 1rem;
   }
 
   .action-card {
-    padding: 1rem 0.5rem;
+    padding: 1.25rem 0.75rem;
+    min-width: auto;
     max-width: 100%;
   }
 
   .action-card .icon {
-    font-size: 1.2rem;
-    margin-bottom: 0.4rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
   }
 
   .action-card span {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 }
 
 @media (max-width: 480px) {
   .quick-actions {
-    flex-direction: column;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
     padding: 0.75rem 0.75rem 0 0.75rem;
   }
 
   .action-card {
-    padding: 1rem;
+    padding: 1rem 0.5rem;
+    min-width: auto;
     max-width: 100%;
+    border-radius: 12px;
   }
 
   .action-card .icon {
     font-size: 1.3rem;
+    margin-bottom: 0.4rem;
   }
 
   .action-card span {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 360px) {
+  .quick-actions {
+    gap: 0.5rem;
+    padding: 0.625rem 0.625rem 0 0.625rem;
+  }
+
+  .action-card {
+    padding: 0.875rem 0.5rem;
+    border-radius: 10px;
+  }
+
+  .action-card .icon {
+    font-size: 1.2rem;
+  }
+
+  .action-card span {
+    font-size: 0.75rem;
   }
 }
 </style>

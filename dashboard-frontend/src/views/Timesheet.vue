@@ -14,8 +14,7 @@
           <div class="form-row">
             <div class="form-group">
               <label for="date">Data</label>
-              <input id="date" v-model="newEntry.date" type="date"
-required :max="today" />
+              <input id="date" v-model="newEntry.date" type="date" required :max="today" />
             </div>
             <div class="form-group">
               <label for="project">Progetto</label>
@@ -960,9 +959,11 @@ const filterByWeek = () => {
     padding: 1.5rem;
     grid-template-columns: 1fr;
   }
+
   .timesheet-form-section {
     position: static;
   }
+
   .summary-cards {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -972,21 +973,57 @@ const filterByWeek = () => {
   .timesheet-content {
     padding: 1rem;
   }
+
   .timesheet-form-section {
     padding: 1.5rem;
   }
+
   .timesheet-entries-section {
     padding: 1.5rem;
   }
+
   .form-row {
     grid-template-columns: 1fr;
   }
+
   .summary-cards {
     grid-template-columns: 1fr;
+    gap: 0.875rem;
   }
+
+  .summary-card {
+    padding: 1rem;
+  }
+
+  .summary-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+
+  .summary-value {
+    font-size: 1.35rem;
+  }
+
   .entries-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* Day header responsive */
+  .day-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .day-total {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .activity-card {
+    padding: 1rem 2.5rem 1rem 1rem;
   }
 }
 
@@ -994,16 +1031,235 @@ const filterByWeek = () => {
   .timesheet-content {
     padding: 0.75rem;
   }
+
   .timesheet-form-section {
     padding: 1rem;
+    border-radius: 10px;
   }
+
+  .timesheet-form-section h2 {
+    font-size: 1.1rem;
+  }
+
   .timesheet-entries-section {
     padding: 1rem;
+    border-radius: 10px;
   }
-  .entry-header {
+
+  .entries-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .form-group label {
+    font-size: 0.85rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .submit-btn {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+
+  .filter-week {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-week select {
+    flex: 1;
+    max-width: 200px;
+  }
+
+  /* Summary cards compatte */
+  .summary-cards {
+    gap: 0.75rem;
+  }
+
+  .summary-card {
+    padding: 0.875rem;
+  }
+
+  .summary-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .summary-label {
+    font-size: 0.8rem;
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+  }
+
+  /* Day group ottimizzato */
+  .day-group {
+    border-radius: 10px;
+  }
+
+  .day-header {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .day-date {
+    font-size: 0.9rem;
+  }
+
+  .day-date i {
+    font-size: 1rem;
+  }
+
+  .day-total {
+    width: 100%;
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .day-total strong {
+    font-size: 1rem;
+  }
+
+  .overtime-badge {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
+    margin-left: 0;
+  }
+
+  .hours-badge {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
+  }
+
+  /* Activities compatte */
+  .day-activities {
+    padding: 0.875rem;
+    gap: 0.75rem;
+  }
+
+  .activity-card {
+    padding: 0.875rem 2.25rem 0.875rem 0.875rem;
+    border-radius: 6px;
+  }
+
+  .activity-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .activity-project {
+    width: 100%;
+    gap: 0.4rem;
+  }
+
+  .project-badge {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .type-badge {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
+  }
+
+  .activity-hours {
+    font-size: 0.9rem;
+    margin-right: 0;
+  }
+
+  .activity-hours strong {
+    font-size: 1rem;
+  }
+
+  .activity-description {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .delete-activity-btn {
+    width: 28px;
+    height: 28px;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* Modal delete responsive */
+  .delete-modal-content {
+    padding: 1.5rem;
+    max-width: 95%;
+    border-radius: 12px;
+  }
+
+  .delete-modal-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .delete-modal-title {
+    font-size: 1.25rem;
+  }
+
+  .delete-modal-text {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .delete-modal-actions {
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .cancel-delete-btn,
+  .confirm-delete-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Extra small mobile */
+@media (max-width: 360px) {
+  .timesheet-content {
+    padding: 0.5rem;
+  }
+
+  .timesheet-form-section,
+  .timesheet-entries-section {
+    padding: 0.875rem;
+    border-radius: 8px;
+  }
+
+  .day-header {
+    padding: 0.875rem;
+  }
+
+  .day-activities {
+    padding: 0.75rem;
+  }
+
+  .activity-card {
+    padding: 0.75rem 2rem 0.75rem 0.75rem;
+  }
+
+  .delete-modal-content {
+    padding: 1.25rem;
   }
 }
 
