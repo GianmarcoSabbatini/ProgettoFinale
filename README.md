@@ -410,56 +410,6 @@ const apiLimiter = rateLimit({
 - Token usa-e-getta
 - Invalidazione token precedenti
 
-## 🚀 Deploy in Produzione
-
-### Checklist Pre-Deploy
-
-- [ ] Generare JWT_SECRET sicuro (64+ caratteri)
-- [ ] Configurare password MySQL robusta
-- [ ] Impostare `NODE_ENV=production`
-- [ ] Configurare HTTPS con reverse proxy (Nginx/Apache)
-- [ ] Eseguire `npm audit` e risolvere vulnerabilità
-- [ ] Configurare backup automatici database
-- [ ] Impostare monitoring (PM2, New Relic, etc.)
-- [ ] Configurare FRONTEND_URL con dominio produzione
-- [ ] Build frontend: `npm run build`
-- [ ] Testare tutti gli endpoint
-
-### Esempio Configurazione Nginx
-
-```nginx
-server {
-    listen 80;
-    server_name tuodominio.com;
-
-    # Redirect HTTP to HTTPS
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name tuodominio.com;
-
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    # Frontend
-    location / {
-        root /path/to/dashboard-frontend/dist;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Backend API
-    location /api {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
 
 ### PM2 Process Manager
 
@@ -524,12 +474,6 @@ Progetto accademico - Tutti i diritti riservati
 
 **Gianmarco Sabbatini**
 
-- GitHub: [@GianmarcoSabbatini](https://github.com/GianmarcoSabbatini)
-
-## 🙏 Ringraziamenti
-
-Progetto finale sviluppato per il corso di sviluppo web.
-
 ### Tecnologie utilizzate:
 
 - Vue.js Team per il framework frontend
@@ -537,7 +481,3 @@ Progetto finale sviluppato per il corso di sviluppo web.
 - MySQL per il database
 - Tutti i maintainer delle librerie open source utilizzate
 
----
-
-**Versione:** 1.0.0
-**Ultimo aggiornamento:** Novembre 2025
